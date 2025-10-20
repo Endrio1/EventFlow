@@ -2,7 +2,7 @@
 
 EventFlow é uma plataforma completa para gerenciamento de eventos que permite organizadores criarem e gerenciarem eventos, enquanto usuários podem facilmente descobrir e se inscrever em eventos de seu interesse.
 
-![EventFlow](https://img.shields.io/badge/Status-Completo-success)
+![EventFlow](https://img.shields.io/badge/Status-Incompleto-red)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green)
 ![Express](https://img.shields.io/badge/Express-4.18-blue)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)
