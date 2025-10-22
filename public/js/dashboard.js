@@ -342,6 +342,9 @@ class DashboardManager {
   editEvent(eventId) {
     const event = this.events.find(e => e.id == eventId);
     if (!event) return;
+    // Abrir seção de criação/edição primeiro (isso chama resetForm),
+    // depois preencher os campos e definir editingEventId.
+    this.showSection('create');
 
     this.editingEventId = eventId;
     document.getElementById('formTitle').textContent = 'Editar Evento';
@@ -361,8 +364,6 @@ class DashboardManager {
       const preview = document.getElementById('imagePreview');
       preview.innerHTML = `<img src="http://localhost:3000${event.image}" alt="Preview">`;
     }
-
-    this.showSection('create');
   }
 
   async handleEventSubmit() {
@@ -384,10 +385,14 @@ class DashboardManager {
         formData.append('image', imageFile);
       }
 
+      // Debug: verificar fluxo (create vs update)
+      console.log('[DASHBOARD] submitting event, editingEventId=', this.editingEventId);
       if (this.editingEventId) {
+        console.log('[DASHBOARD] calling api.updateEvent with id=', this.editingEventId);
         await api.updateEvent(this.editingEventId, formData);
         formError.innerHTML = '<div class="alert alert-success">Evento atualizado com sucesso!</div>';
       } else {
+        console.log('[DASHBOARD] calling api.createEvent');
         await api.createEvent(formData);
         formError.innerHTML = '<div class="alert alert-success">Evento criado com sucesso!</div>';
       }

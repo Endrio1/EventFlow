@@ -19,7 +19,9 @@ class EventsManager {
   attachEventListeners() {
     // Busca
     document.getElementById('searchBtn')?.addEventListener('click', () => {
+      // Mapear para parâmetro `name` do backend para busca por título
       this.filters.search = document.getElementById('searchInput').value;
+      this.filters.name = this.filters.search;
       this.currentPage = 1;
       this.loadEvents();
     });
@@ -27,6 +29,7 @@ class EventsManager {
     document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         this.filters.search = e.target.value;
+        this.filters.name = this.filters.search;
         this.currentPage = 1;
         this.loadEvents();
       }
@@ -45,7 +48,10 @@ class EventsManager {
     const loading = document.getElementById('loading');
 
     try {
-      loading.style.display = 'block';
+      if (loading) loading.style.display = 'block';
+
+      // Se não existe o container de eventos, aborta silenciosamente
+      if (!eventsGrid) return;
 
       const params = {
         page: this.currentPage,
@@ -56,7 +62,7 @@ class EventsManager {
       const response = await api.getEvents(params);
       const { events, pagination } = response.data;
 
-      loading.style.display = 'none';
+  if (loading) loading.style.display = 'none';
 
       if (events.length === 0) {
         eventsGrid.innerHTML = `
@@ -72,7 +78,7 @@ class EventsManager {
       this.renderPagination(pagination);
       this.attachEventCardListeners();
     } catch (error) {
-      loading.style.display = 'none';
+  if (loading) loading.style.display = 'none';
       eventsGrid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
           <h3 style="color: var(--error-color);">Erro ao carregar eventos</h3>
@@ -91,9 +97,11 @@ class EventsManager {
       year: 'numeric' 
     });
 
-    const capacityPercentage = (event.current_enrollments / event.capacity) * 100;
-    const capacityClass = capacityPercentage >= 100 ? 'full' : capacityPercentage >= 80 ? 'warning' : '';
-    const isFull = event.current_enrollments >= event.capacity;
+  const capacityPercentage = (event.current_enrollments / event.capacity) * 100;
+  const capacityClass = capacityPercentage >= 100 ? 'full' : capacityPercentage >= 80 ? 'warning' : '';
+  const isFull = event.current_enrollments >= event.capacity;
+  const currentUser = api.getCurrentUser();
+  const showCapacity = currentUser && (currentUser.role === 'organizer' || currentUser.role === 'admin');
 
     const imageUrl = event.image ? `http://localhost:3000${event.image}` : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%231E40AF" width="400" height="200"/><text fill="white" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">Evento</text></svg>';
 
@@ -124,6 +132,7 @@ class EventsManager {
             </div>
           </div>
 
+          ${showCapacity ? `
           <div class="event-capacity">
             <span>${event.current_enrollments}</span>
             <div class="capacity-bar">
@@ -131,6 +140,7 @@ class EventsManager {
             </div>
             <span>${event.capacity}</span>
           </div>
+          ` : ''}
 
           <div class="event-actions">
             <button class="btn btn-primary btn-view-event" data-event-id="${event.id}">

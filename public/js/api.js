@@ -183,8 +183,26 @@ class API {
   }
 
   async updateEvent(id, formData) {
-    formData.append('_method', 'PUT');
-    return this.upload(`/events/${id}`, formData, true);
+    try {
+      const headers = {};
+      const token = this.getToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${this.baseURL}/events/${id}`, {
+        method: 'PUT',
+        headers,
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || 'Erro ao atualizar evento');
+
+      return data;
+    } catch (error) {
+      console.error('Update Event Error:', error);
+      throw error;
+    }
   }
 
   async deleteEvent(id) {

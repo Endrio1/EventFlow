@@ -51,17 +51,23 @@ body {
 
 .nav-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; /* start from left, use logo margin to push it left */
   align-items: center;
+  gap: 1rem; /* reduce spacing between header items */
 }
 
 .logo h2 {
-  font-size: 1.75rem;
+  font-size: 2.75rem;
   font-weight: 700;
 }
 
 .logo span {
   color: var(--accent-color);
+}
+
+/* keep logo at the far left so nav-menu and avatar group sit together */
+.logo {
+  margin-right: auto;
 }
 
 .mobile-menu-toggle {
@@ -86,7 +92,8 @@ body {
   display: flex;
   list-style: none;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem; /* tighter spacing between links */
+  margin-right: 0.5rem; /* bring the nav-menu closer to the avatar */
 }
 
 .nav-link {
@@ -151,6 +158,16 @@ body {
   padding: 0.5rem 0;
   z-index: 1000;
 }
+
+/* Ensure userMenu is hidden by default; JS will toggle visibility */
+#userMenu {
+  display: none;
+}
+
+#userMenu {
+  margin-left: 0.25rem; /* small gap to avatar */
+}
+
 
 .dropdown-menu.show {
   display: block;
@@ -801,6 +818,28 @@ body {
     display: flex;
   }
 
+  /* Position the user avatar to the right of the hamburger */
+  .nav-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Make hamburger and avatar sit together on the left, nav items slide down */
+  #mobileMenuToggle {
+    order: 1;
+  }
+
+  #userMenu {
+    order: 2;
+    display: block; /* will be hidden/shown by JS depending on auth state */
+  }
+
+  /* Hide the illustrative hero image on tablet/mobile to save space */
+  .hero-image {
+    display: none;
+  }
+
   .nav-menu {
     position: absolute;
     top: 100%;
@@ -860,6 +899,17 @@ body {
 
   .dropdown-menu {
     right: -50px;
+  }
+}
+
+/* Also hide hero-image for small laptops / tablets in landscape */
+@media (max-width: 1024px) {
+  .hero-image {
+    display: none;
+  }
+
+  .hero-content .container {
+    grid-template-columns: 1fr;
   }
 }
 

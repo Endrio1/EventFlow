@@ -66,9 +66,14 @@ class AuthManager {
     const createEventBtn = document.getElementById('createEventBtn');
 
     if (isAuthenticated && user) {
-      authButtons?.classList.add('hidden');
-      userMenu?.classList.remove('hidden');
-      userMenu.style.display = 'block';
+      // Remover completamente os botões de autenticação do DOM quando estiver logado
+      if (authButtons && authButtons.parentNode) {
+        authButtons.style.display = 'none';
+      }
+      if (userMenu) {
+        userMenu.classList.remove('hidden');
+        userMenu.style.display = 'block';
+      }
 
       // Atualizar avatar
       const userName = document.getElementById('userName');
@@ -78,8 +83,10 @@ class AuthManager {
 
       // Mostrar link do dashboard para organizadores e admins
       if (user.role === 'organizer' || user.role === 'admin') {
-        dashboardLink?.classList.remove('hidden');
-        dashboardLink.style.display = 'block';
+        if (dashboardLink) {
+          dashboardLink.classList.remove('hidden');
+          dashboardLink.style.display = 'block';
+        }
         if (createEventBtn) {
           createEventBtn.style.display = 'inline-flex';
           createEventBtn.addEventListener('click', (e) => {
@@ -87,18 +94,31 @@ class AuthManager {
             this.showCreateEventModal();
           });
         }
+        // Also show dashboard 'Novo Evento' button if present
+        const dashCreateBtn = document.getElementById('btnCreateEvent');
+        if (dashCreateBtn) dashCreateBtn.style.display = 'inline-flex';
       } else {
         if (createEventBtn) {
           createEventBtn.style.display = 'none';
         }
+        const dashCreateBtn = document.getElementById('btnCreateEvent');
+        if (dashCreateBtn) dashCreateBtn.style.display = 'none';
       }
     } else {
-      authButtons?.classList.remove('hidden');
-      userMenu?.classList.add('hidden');
-      userMenu.style.display = 'none';
+      // Restaurar visibilidade dos botões de autenticação quando deslogado
+      if (authButtons) {
+        authButtons.style.display = '';
+        authButtons.classList.remove('hidden');
+      }
+      if (userMenu) {
+        userMenu.classList.add('hidden');
+        userMenu.style.display = 'none';
+      }
       if (createEventBtn) {
         createEventBtn.style.display = 'none';
       }
+      const dashCreateBtn = document.getElementById('btnCreateEvent');
+      if (dashCreateBtn) dashCreateBtn.style.display = 'none';
     }
   }
 

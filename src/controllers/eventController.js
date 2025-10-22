@@ -10,6 +10,7 @@ class EventController {
       const { 
         category, 
         search, 
+        name,
         status = 'active', 
         page = 1, 
         limit = 10,
@@ -20,14 +21,20 @@ class EventController {
       const offset = (page - 1) * limit;
       const where = {};
 
-      // Filtros
+      // Filtros (case-insensitive quando possível)
       if (status) where.status = status;
-      if (category) where.category = category;
-      if (search) {
+      if (category) {
+        // Usar comparação case-insensitive para categorias (Postgres iLike)
+        where.category = { [Op.iLike]: category };
+      }
+      // Busca por nome (título) tem prioridade quando fornecida
+      if (name) {
+        where.title = { [Op.iLike]: `%${name}%` };
+      } else if (search) {
         where[Op.or] = [
-          { title: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } },
-          { location: { [Op.like]: `%${search}%` } }
+          { title: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
+          { location: { [Op.iLike]: `%${search}%` } }
         ];
       }
 
@@ -103,6 +110,30 @@ class EventController {
   // Criar novo evento
   async store(req, res, next) {
     try {
+      // Debug: registrar informações da requisição em ambiente de desenvolvimento
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[EVENT][STORE] method=', req.method, 'path=', req.path);
+        console.log('[EVENT][STORE] content-type=', req.headers['content-type']);
+        console.log('[EVENT][STORE] userId=', req.userId, 'userRole=', req.userRole);
+        try {
+          console.log('[EVENT][STORE] body keys=', Object.keys(req.body || {}));
+        } catch (e) {
+          console.log('[EVENT][STORE] body=', req.body);
+        }
+        if (req.file) {
+          console.log('[EVENT][STORE] file=', {
+            fieldname: req.file.fieldname,
+            originalname: req.file.originalname,
+            filename: req.file.filename,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            path: req.file.path
+          });
+        } else {
+          console.log('[EVENT][STORE] file= null');
+        }
+      }
+
       const { title, description, category, location, date, time, capacity } = req.body;
 
       // Validações básicas
@@ -144,6 +175,29 @@ class EventController {
   async update(req, res, next) {
     try {
       const { id } = req.params;
+      // Debug: registrar informações da requisição em ambiente de desenvolvimento
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[EVENT][UPDATE] method=', req.method, 'path=', req.path, 'id=', id);
+        console.log('[EVENT][UPDATE] content-type=', req.headers['content-type']);
+        console.log('[EVENT][UPDATE] userId=', req.userId, 'userRole=', req.userRole);
+        try {
+          console.log('[EVENT][UPDATE] body keys=', Object.keys(req.body || {}));
+        } catch (e) {
+          console.log('[EVENT][UPDATE] body=', req.body);
+        }
+        if (req.file) {
+          console.log('[EVENT][UPDATE] file=', {
+            fieldname: req.file.fieldname,
+            originalname: req.file.originalname,
+            filename: req.file.filename,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            path: req.file.path
+          });
+        } else {
+          console.log('[EVENT][UPDATE] file= null');
+        }
+      }
       const { title, description, category, location, date, time, capacity, status } = req.body;
 
       const event = await Event.findByPk(id);
