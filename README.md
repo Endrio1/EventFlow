@@ -152,35 +152,6 @@ EventFlow/
 - **Sucesso (Verde suave)**: `#22C55E`
 - **Erro/Alerta (Vermelho coral)**: `#EF4444`
 
-## 📡 API Endpoints
-
-### Autenticação
-```
-POST   /api/auth/register      # Registrar usuário
-POST   /api/auth/login         # Fazer login
-GET    /api/auth/profile       # Obter perfil (autenticado)
-PUT    /api/auth/profile       # Atualizar perfil (autenticado)
-PUT    /api/auth/change-password  # Alterar senha (autenticado)
-```
-
-### Eventos
-```
-GET    /api/events             # Listar eventos (público)
-GET    /api/events/:id         # Obter evento específico (público)
-POST   /api/events             # Criar evento (organizador)
-PUT    /api/events/:id         # Atualizar evento (organizador)
-DELETE /api/events/:id         # Deletar evento (organizador)
-GET    /api/events/organizer/my-events  # Meus eventos (organizador)
-```
-
-### Inscrições
-```
-POST   /api/enrollments/events/:eventId/enroll       # Inscrever-se
-DELETE /api/enrollments/events/:eventId/cancel       # Cancelar inscrição
-GET    /api/enrollments/my-enrollments               # Minhas inscrições
-GET    /api/enrollments/events/:eventId/participants # Ver participantes (organizador)
-```
-
 ## 🔑 Tipos de Usuário
 
 ### User (Participante)
@@ -217,44 +188,6 @@ GET    /api/enrollments/events/:eventId/participants # Ver participantes (organi
 - **JavaScript (Vanilla)** - Interatividade
 - **Fetch API** - Comunicação com backend
 
-## 📝 Exemplos de Uso
-
-### Registrar um usuário
-```javascript
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "name": "João Silva",
-  "email": "joao@example.com",
-  "password": "senha123",
-  "role": "organizer"
-}
-```
-
-### Criar um evento
-```javascript
-POST /api/events
-Authorization: Bearer {token}
-Content-Type: multipart/form-data
-
-{
-  "title": "Workshop de Node.js",
-  "description": "Aprenda Node.js do zero",
-  "category": "tecnologia",
-  "location": "São Paulo, SP",
-  "date": "2025-12-01",
-  "time": "19:00",
-  "capacity": 50,
-  "image": [arquivo]
-}
-```
-
-### Inscrever-se em um evento
-```javascript
-POST /api/enrollments/events/1/enroll
-Authorization: Bearer {token}
-```
 
 ## 🔒 Segurança
 
@@ -295,7 +228,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👨‍💻 Autor
 
-Desenvolvido com ❤️ por Endrio
+Desenvolvido por Endrio
 
 ## 📞 Suporte
 
@@ -306,13 +239,9 @@ Se você tiver alguma dúvida ou problema, por favor:
 ## 🎯 Roadmap Futuro
 
 - [ ] Sistema de notificações por email
-- [ ] Integração com calendário
 - [ ] Sistema de avaliações de eventos
-- [ ] Chat entre participantes
 - [ ] Geração de certificados
 - [ ] Integração com pagamentos
-- [ ] App mobile nativo
-- [ ] Sistema de recomendações
 
 ---
 
