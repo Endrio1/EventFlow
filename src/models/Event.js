@@ -84,6 +84,11 @@ const Event = sequelize.define('Event', {
       min: { args: [0], msg: 'Número de inscrições não pode ser negativo' }
     }
   },
+  sales_closed: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'vendas_fechadas'
+  },
   status: {
     type: DataTypes.ENUM('active', 'cancelled', 'completed'),
     defaultValue: 'active',

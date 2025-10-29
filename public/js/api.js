@@ -205,6 +205,24 @@ class API {
     }
   }
 
+  async setSalesStatus(id, closed) {
+    const token = this.getToken();
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(`${this.baseURL}/events/${id}/sales`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ closed })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Erro ao atualizar vendas');
+    return data;
+  }
+
   async deleteEvent(id) {
     return this.delete(`/events/${id}`, true);
   }

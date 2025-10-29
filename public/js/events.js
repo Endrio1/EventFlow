@@ -102,6 +102,7 @@ class EventsManager {
   const isFull = event.current_enrollments >= event.capacity;
   const currentUser = api.getCurrentUser();
   const showCapacity = currentUser && (currentUser.role === 'organizer' || currentUser.role === 'admin');
+  const salesBadge = event.sales_closed ? `<span class="sales-closed-badge">Vendas Fechadas</span>` : '';
 
     const imageUrl = event.image ? `http://localhost:3000${event.image}` : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%231E40AF" width="400" height="200"/><text fill="white" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">Evento</text></svg>';
 
@@ -109,6 +110,7 @@ class EventsManager {
       <div class="event-card" data-event-id="${event.id}">
         <img src="${imageUrl}" alt="${event.title}" class="event-image" onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 400 200\\"><rect fill=\\"%231E40AF\\" width=\\"400\\" height=\\"200\\"/><text fill=\\"white\\" font-size=\\"24\\" x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".3em\\">Evento</text></svg>'">
         <div class="event-content">
+          ${salesBadge}
           <span class="event-category">${event.category}</span>
           <h3 class="event-title">${event.title}</h3>
           <p class="event-description">${event.description}</p>
@@ -146,7 +148,11 @@ class EventsManager {
             <button class="btn btn-primary btn-view-event" data-event-id="${event.id}">
               Ver Detalhes
             </button>
-            ${!isFull ? `
+            ${event.sales_closed ? `
+              <button class="btn btn-secondary" disabled>
+                Vendas Encerradas
+              </button>
+            ` : !isFull ? `
               <button class="btn btn-success btn-enroll-event" data-event-id="${event.id}">
                 Inscrever-se
               </button>
@@ -196,9 +202,25 @@ class EventsManager {
       const isFull = event.current_enrollments >= event.capacity;
       const imageUrl = event.image ? `http://localhost:3000${event.image}` : '';
 
+      const currentUser = api.getCurrentUser();
+      const showCapacity = currentUser && (currentUser.role === 'organizer' || currentUser.role === 'admin');
+
+      const salesBadge = event.sales_closed ? `<span class="sales-closed-badge">Vendas Fechadas</span>` : '';
+
+      const capacityHtml = showCapacity ? `
+        <div class="event-capacity" style="margin-bottom: 1.5rem;">
+          <span><strong>${event.current_enrollments}</strong> inscritos</span>
+          <div class="capacity-bar">
+            <div class="capacity-fill ${isFull ? 'full' : ''}" style="width: ${(event.current_enrollments / event.capacity) * 100}%"></div>
+          </div>
+          <span><strong>${event.capacity}</strong> vagas</span>
+        </div>
+      ` : '';
+
       const content = `
         ${imageUrl ? `<img src="${imageUrl}" alt="${event.title}" style="width: 100%; height: 250px; object-fit: cover; border-radius: var(--border-radius); margin-bottom: 1.5rem;">` : ''}
         
+        ${salesBadge}
         <span class="event-category">${event.category}</span>
         <h3 style="margin: 1rem 0;">${event.title}</h3>
         <p style="color: var(--secondary-color); margin-bottom: 1.5rem;">${event.description}</p>
@@ -231,20 +253,16 @@ class EventsManager {
           </div>
         </div>
 
-        <div class="event-capacity" style="margin-bottom: 1.5rem;">
-          <span><strong>${event.current_enrollments}</strong> inscritos</span>
-          <div class="capacity-bar">
-            <div class="capacity-fill ${isFull ? 'full' : ''}" style="width: ${(event.current_enrollments / event.capacity) * 100}%"></div>
-          </div>
-          <span><strong>${event.capacity}</strong> vagas</span>
-        </div>
+        ${capacityHtml}
 
-        ${api.isAuthenticated() && !isFull ? `
+        ${api.isAuthenticated() && !isFull && !event.sales_closed ? `
           <button class="btn btn-success btn-large" onclick="eventsManager.enrollInEvent(${event.id}, true)" style="width: 100%;">
             Inscrever-se Agora
           </button>
         ` : isFull ? `
           <div class="alert alert-error">Este evento já atingiu a capacidade máxima.</div>
+        ` : event.sales_closed ? `
+          <div class="alert alert-info">As vendas para este evento foram encerradas pelo organizador.</div>
         ` : `
           <div class="alert alert-info">Faça login para se inscrever neste evento.</div>
         `}

@@ -304,6 +304,11 @@ class DashboardManager {
             </svg>
             Deletar
           </button>
+          ${ (api.getCurrentUser() && (api.getCurrentUser().role === 'admin' || api.getCurrentUser().role === 'organizer')) ? `
+          <button class="btn btn-warning btn-toggle-sales" data-event-id="${event.id}" data-closed="${event.sales_closed}">
+            ${event.sales_closed ? 'Reabrir Vendas' : 'Fechar Vendas'}
+          </button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -328,6 +333,25 @@ class DashboardManager {
     document.querySelectorAll('.btn-delete-event').forEach(btn => {
       btn.addEventListener('click', async () => {
         await this.deleteEvent(btn.dataset.eventId);
+      });
+    });
+
+    // Toggle sales (admin)
+    document.querySelectorAll('.btn-toggle-sales').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const eventId = btn.dataset.eventId;
+        const closed = btn.dataset.closed === 'true';
+        const confirmMsg = closed ? 'Deseja reabrir as vendas deste evento?' : 'Deseja fechar as vendas deste evento?';
+        if (!confirm(confirmMsg)) return;
+
+        try {
+          await api.setSalesStatus(eventId, !closed);
+          alert('Status de vendas atualizado com sucesso');
+          this.loadMyEvents();
+          this.loadOverview();
+        } catch (error) {
+          alert('Erro ao atualizar status de vendas: ' + error.message);
+        }
       });
     });
   }

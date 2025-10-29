@@ -30,6 +30,15 @@ class EnrollmentController {
         });
       }
 
+      // Verificar se vendas estão fechadas
+      if (event.sales_closed) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          message: 'As vendas para este evento foram encerradas pelo administrador'
+        });
+      }
+
       // Verificar data do evento
       if (new Date(event.date) < new Date()) {
         await transaction.rollback();

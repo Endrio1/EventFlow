@@ -319,6 +319,32 @@ class EventController {
       next(error);
     }
   }
+
+  // Fechar ou abrir vendas de ingressos (apenas admin)
+  async setSalesClosed(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { closed } = req.body;
+
+      const event = await Event.findByPk(id);
+
+      if (!event) {
+        return res.status(404).json({ success: false, message: 'Evento não encontrado' });
+      }
+
+      // Apenas o organizador do evento ou admin podem alterar
+      if (event.organizer_id !== req.userId && req.userRole !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Você não tem permissão para esta ação' });
+      }
+
+      event.sales_closed = !!closed;
+      await event.save();
+
+      return res.json({ success: true, message: `Vendas ${event.sales_closed ? 'encerradas' : 'reabertas'} com sucesso`, data: event });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new EventController();

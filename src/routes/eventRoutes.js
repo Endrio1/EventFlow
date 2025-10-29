@@ -35,4 +35,10 @@ router.get('/organizer/my-events',
   eventController.myEvents
 );
 
+// Rota para fechar/abrir vendas (organizador do evento ou admin)
+router.patch('/:id/sales',
+  authMiddleware,
+  eventController.setSalesClosed
+);
+
 module.exports = router;

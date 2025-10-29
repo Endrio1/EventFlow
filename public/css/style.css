@@ -393,6 +393,19 @@ body {
   margin-bottom: 0.75rem;
 }
 
+/* Badge shown when ticket sales are closed */
+.sales-closed-badge {
+  display: inline-block;
+  background: #ef4444;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  margin-right: 0.5rem;
+}
+
 .event-title {
   font-size: 1.5rem;
   font-weight: 700;
