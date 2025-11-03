@@ -254,7 +254,6 @@ class EventsManager {
         </div>
 
         ${capacityHtml}
-
         ${api.isAuthenticated() && !isFull && !event.sales_closed ? `
           <button class="btn btn-success btn-large" onclick="eventsManager.enrollInEvent(${event.id}, true)" style="width: 100%;">
             Inscrever-se Agora
@@ -266,10 +265,229 @@ class EventsManager {
         ` : `
           <div class="alert alert-info">Faça login para se inscrever neste evento.</div>
         `}
+
+        <hr />
+        <section id="feedbackSection-${event.id}">
+          <h4>Avaliações</h4>
+          <div id="feedbackList-${event.id}">Carregando avaliações...</div>
+
+          <div id="feedbackFormContainer-${event.id}">
+            ${api.isAuthenticated() ? `
+              <form id="feedbackForm-${event.id}" class="feedback-form" style="margin-top: 1rem; display: none;">
+                <input type="hidden" id="feedbackId-${event.id}" value="">
+                <label for="feedbackNota-${event.id}">Nota:</label>
+                <select id="feedbackNota-${event.id}" name="nota" required>
+                  <option value="">--</option>
+                  <option value="5">5 - Excelente</option>
+                  <option value="4">4 - Muito bom</option>
+                  <option value="3">3 - Bom</option>
+                  <option value="2">2 - Ruim</option>
+                  <option value="1">1 - Péssimo</option>
+                </select>
+                <div style="margin-top: .5rem;">
+                  <textarea id="feedbackComentario-${event.id}" name="comentario" placeholder="Deixe seu comentário (opcional)" rows="3" style="width:100%;"></textarea>
+                </div>
+                <div style="margin-top: .5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                  <button class="btn btn-primary" type="submit">Enviar Avaliação</button>
+                  <button class="btn btn-secondary" type="button" id="cancelEditBtn-${event.id}" style="display: none;">Cancelar</button>
+                </div>
+              </form>
+            ` : `<div class="alert alert-info">Faça login para deixar uma avaliação.</div>`}
+          </div>
+        </section>
       `;
 
       if (window.authManager) {
         window.authManager.createModal(event.title, content);
+
+        // Após abrir o modal, carregar feedbacks e verificar participação
+        (async () => {
+          try {
+            const listContainer = document.getElementById(`feedbackList-${event.id}`);
+            const form = document.getElementById(`feedbackForm-${event.id}`);
+            const formContainer = document.getElementById(`feedbackFormContainer-${event.id}`);
+
+            // Verificar se usuário participou do evento
+            let isParticipant = false;
+            if (api.isAuthenticated()) {
+              try {
+                const enrollmentsResp = await api.getMyEnrollments();
+                const enrollments = enrollmentsResp.data || [];
+                isParticipant = enrollments.some(
+                  e => e.event_id === event.id && (e.status === 'confirmed' || e.status === 'attended')
+                );
+              } catch (err) {
+                console.warn('Erro ao verificar participação', err);
+              }
+            }
+
+            // Mostrar ou ocultar formulário baseado na participação
+            if (form) {
+              if (isParticipant) {
+                form.style.display = 'block';
+              } else if (api.isAuthenticated()) {
+                formContainer.innerHTML = '<div class="alert alert-info" style="margin-top: 1rem;">Você precisa participar deste evento para deixar uma avaliação.</div>';
+              }
+            }
+
+            // Carregar feedbacks
+            const resp = await api.getFeedbacks(event.id);
+            let feedbacks = [];
+            if (resp && resp.data) {
+              if (Array.isArray(resp.data)) feedbacks = resp.data;
+              else if (Array.isArray(resp.data.feedbacks)) feedbacks = resp.data.feedbacks;
+            }
+
+            if (!listContainer) return;
+
+            const currentUser = api.getCurrentUser();
+            
+            const renderFeedbacks = (feedbackList) => {
+              // Verificar se usuário já avaliou
+              const userFeedback = currentUser ? feedbackList.find(f => f.usuario_id === currentUser.id) : null;
+              
+              if (feedbackList.length === 0) {
+                listContainer.innerHTML = '<p style="color:var(--secondary-color);">Seja o primeiro a avaliar este evento.</p>';
+              } else {
+                listContainer.innerHTML = feedbackList.map(f => {
+                  const date = new Date(f.criado_em || f.createdAt || Date.now());
+                  const formatted = date.toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+                  const isOwner = currentUser && f.usuario_id === currentUser.id;
+                  return `
+                    <div class="feedback-item">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>${f.user?.name || 'Usuário'}</strong>
+                        <small style="color:var(--secondary-color);">${formatted}</small>
+                      </div>
+                      <div style="margin-top:.25rem;">Nota: <strong>${f.nota}</strong></div>
+                      ${f.comentario ? `<p style="margin-top:.5rem; color:var(--secondary-color);">${f.comentario}</p>` : ''}
+                      ${isOwner ? `
+                        <div class="feedback-actions">
+                          <button class="btn-edit" data-feedback-id="${f.id}" data-nota="${f.nota}" data-comentario="${f.comentario || ''}">Editar</button>
+                          <button class="btn-delete" data-feedback-id="${f.id}">Excluir</button>
+                        </div>
+                      ` : ''}
+                    </div>
+                  `;
+                }).join('');
+              }
+
+              // Gerenciar visibilidade do formulário baseado em participação + já avaliou
+              if (form && isParticipant) {
+                if (userFeedback) {
+                  // Usuário já avaliou - esconder formulário novo, mas permitir editar
+                  form.style.display = 'none';
+                  formContainer.querySelector('.alert')?.remove(); // Remover alerts anteriores
+                } else {
+                  // Usuário pode criar nova avaliação
+                  form.style.display = 'block';
+                  formContainer.querySelector('.alert')?.remove();
+                }
+              }
+
+              // Acoplar handlers de editar/excluir
+              listContainer.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', () => {
+                  const feedbackId = btn.dataset.feedbackId;
+                  const nota = btn.dataset.nota;
+                  const comentario = btn.dataset.comentario;
+                  
+                  if (form) {
+                    // Garantir que o formulário esteja visível ao editar
+                    form.style.display = 'block';
+                    document.getElementById(`feedbackId-${event.id}`).value = feedbackId;
+                    document.getElementById(`feedbackNota-${event.id}`).value = nota;
+                    document.getElementById(`feedbackComentario-${event.id}`).value = comentario;
+                    const cancelBtnEl = document.getElementById(`cancelEditBtn-${event.id}`);
+                    if (cancelBtnEl) cancelBtnEl.style.display = 'inline-block';
+                    // focar no select de nota para melhor UX
+                    const notaEl = document.getElementById(`feedbackNota-${event.id}`);
+                    if (notaEl) notaEl.focus();
+                    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }
+                });
+              });
+
+              listContainer.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                  if (!confirm('Tem certeza que deseja excluir esta avaliação?')) return;
+                  const feedbackId = btn.dataset.feedbackId;
+                  try {
+                    await api.deleteFeedback(feedbackId);
+                    alert('Avaliação excluída com sucesso!');
+                    // Recarregar lista
+                    const updated = await api.getFeedbacks(event.id);
+                    let fb = [];
+                    if (updated && updated.data) {
+                      if (Array.isArray(updated.data)) fb = updated.data;
+                      else if (Array.isArray(updated.data.feedbacks)) fb = updated.data.feedbacks;
+                    }
+                    renderFeedbacks(fb);
+                  } catch (err) {
+                    alert('Erro ao excluir avaliação: ' + (err.message || err));
+                  }
+                });
+              });
+            };
+
+            renderFeedbacks(feedbacks);
+
+            // Form submit (criar ou editar)
+            if (form) {
+              const cancelBtn = document.getElementById(`cancelEditBtn-${event.id}`);
+              if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                  document.getElementById(`feedbackId-${event.id}`).value = '';
+                  document.getElementById(`feedbackNota-${event.id}`).value = '';
+                  document.getElementById(`feedbackComentario-${event.id}`).value = '';
+                  cancelBtn.style.display = 'none';
+                });
+              }
+
+              form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const feedbackIdEl = document.getElementById(`feedbackId-${event.id}`);
+                const notaEl = document.getElementById(`feedbackNota-${event.id}`);
+                const comentarioEl = document.getElementById(`feedbackComentario-${event.id}`);
+                const feedbackId = feedbackIdEl.value;
+                const nota = notaEl.value;
+                const comentario = comentarioEl.value;
+
+                try {
+                  if (feedbackId) {
+                    // Editar
+                    await api.updateFeedback(feedbackId, { nota, comentario });
+                    alert('Avaliação atualizada com sucesso!');
+                  } else {
+                    // Criar
+                    await api.createFeedback(event.id, { nota, comentario });
+                    alert('Avaliação enviada com sucesso!');
+                  }
+                  
+                  feedbackIdEl.value = '';
+                  notaEl.value = '';
+                  comentarioEl.value = '';
+                  if (cancelBtn) cancelBtn.style.display = 'none';
+                  
+                  // Recarregar lista
+                  const updated = await api.getFeedbacks(event.id);
+                  let fb = [];
+                  if (updated && updated.data) {
+                    if (Array.isArray(updated.data)) fb = updated.data;
+                    else if (Array.isArray(updated.data.feedbacks)) fb = updated.data.feedbacks;
+                  }
+                  renderFeedbacks(fb);
+                } catch (err) {
+                  alert('Erro ao processar avaliação: ' + (err.message || err));
+                }
+              });
+            }
+          } catch (err) {
+            console.error('Erro ao carregar feedbacks', err);
+            const listContainer = document.getElementById(`feedbackList-${event.id}`);
+            if (listContainer) listContainer.innerHTML = '<p style="color:var(--error-color);">Não foi possível carregar avaliações.</p>';
+          }
+        })();
       }
     } catch (error) {
       alert('Erro ao carregar detalhes do evento: ' + error.message);

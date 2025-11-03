@@ -178,6 +178,24 @@ class API {
     return this.get(`/events/${id}`);
   }
 
+  // Feedbacks
+  async getFeedbacks(eventId, params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.get(`/events/${eventId}/feedbacks${qs ? `?${qs}` : ''}`);
+  }
+
+  async createFeedback(eventId, data) {
+    return this.post(`/events/${eventId}/feedbacks`, data, true);
+  }
+
+  async updateFeedback(feedbackId, data) {
+    return this.put(`/feedbacks/${feedbackId}`, data, true);
+  }
+
+  async deleteFeedback(feedbackId) {
+    return this.delete(`/feedbacks/${feedbackId}`, true);
+  }
+
   async createEvent(formData) {
     return this.upload('/events', formData, true);
   }

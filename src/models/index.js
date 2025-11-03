@@ -2,6 +2,7 @@ const sequelize = require('../config/database');
 const User = require('./User');
 const Event = require('./Event');
 const Enrollment = require('./Enrollment');
+const Feedback = require('./Feedback');
 
 // Definir associações
 User.hasMany(Event, {
@@ -31,6 +32,11 @@ Event.belongsToMany(User, {
 Enrollment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Enrollment.belongsTo(Event, { foreignKey: 'event_id', as: 'event' });
 
+// Feedback associations
+Feedback.belongsTo(User, { foreignKey: 'usuario_id', as: 'user' });
+Feedback.belongsTo(Event, { foreignKey: 'evento_id', as: 'event' });
+Event.hasMany(Feedback, { foreignKey: 'evento_id', as: 'feedbacks' });
+
 // Sincronizar modelos com o banco de dados
 const syncDatabase = async () => {
   try {
@@ -50,5 +56,6 @@ module.exports = {
   User,
   Event,
   Enrollment,
+  Feedback,
   syncDatabase
 };

@@ -4,6 +4,7 @@ const router = express.Router();
 const authRoutes = require('./authRoutes');
 const eventRoutes = require('./eventRoutes');
 const enrollmentRoutes = require('./enrollmentRoutes');
+const feedbackRoutes = require('./feedbackRoutes');
 
 // Health check
 router.get('/', (req, res) => {
@@ -14,7 +15,8 @@ router.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       events: '/api/events',
-      enrollments: '/api/enrollments'
+      enrollments: '/api/enrollments',
+      feedbacks: '/api/feedbacks'
     }
   });
 });
@@ -23,5 +25,6 @@ router.get('/', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/events', eventRoutes);
 router.use('/enrollments', enrollmentRoutes);
+router.use('/feedbacks', feedbackRoutes);
 
 module.exports = router;

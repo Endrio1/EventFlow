@@ -3,6 +3,7 @@ const router = express.Router();
 const eventController = require('../controllers/eventController');
 const { authMiddleware, checkRole } = require('../middlewares/auth');
 const upload = require('../config/multer');
+const feedbackController = require('../controllers/feedbackController');
 
 // Rotas públicas
 router.get('/', eventController.index);
@@ -40,5 +41,9 @@ router.patch('/:id/sales',
   authMiddleware,
   eventController.setSalesClosed
 );
+
+// Feedbacks: listar e criar
+router.get('/:id/feedbacks', feedbackController.listByEvent);
+router.post('/:id/feedbacks', authMiddleware, feedbackController.create);
 
 module.exports = router;

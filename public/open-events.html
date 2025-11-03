@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFlow - Eventos Abertos</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="hero-section">
+    <nav class="navbar">
+      <div class="container nav-container">
+        <div class="logo">
+          <h2>Event<span>Flow</span></h2>
+        </div>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="/" class="nav-link">Início</a></li>
+          <li><a href="/open-events.html" class="nav-link">Eventos Abertos</a></li>
+          <li><a href="/" class="nav-link">Sobre</a></li>
+        </ul>
+        <div id="userMenu" class="user-menu" style="display: none;"></div>
+      </div>
+    </nav>
+
+    <div class="hero-content">
+      <div class="container">
+        <div class="hero-text">
+          <h1>Eventos com Vendas Abertas</h1>
+          <p>Lista de todos os eventos que ainda estão com inscrições abertas.</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="events-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Eventos Abertos</h2>
+        <p>Participe dos eventos com vagas disponíveis e vendas abertas.</p>
+      </div>
+
+      <div id="eventsGrid" class="events-grid">
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Carregando eventos...</p>
+        </div>
+      </div>
+
+      <div id="pagination" class="pagination"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2025 EventFlow. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="modalContainer"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/events.js"></script>
+  <script src="/js/open-events.js"></script>
+  <script src="/js/main.js"></script>
+</body>
+</html>
