@@ -1,0 +1,33 @@
+{
+  "name": "eventflow",
+  "version": "1.0.0",
+  "description": "Sistema de Gerenciamento de Eventos - EventFlow",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "PORT=${PORT:-3000} node src/server.js",
+    "dev": "PORT=${PORT:-3000} nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "eventos",
+    "gerenciamento",
+    "api",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    
+    "mongoose": "^7.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

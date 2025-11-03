@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin - EventFlow</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="dashboard-header">
+    <nav class="navbar">
+      <div class="container nav-container">
+        <div class="logo">
+          <h2><a href="/" style="color: white; text-decoration: none;">Event<span>Flow</span></a></h2>
+        </div>
+        <div class="nav-right">
+          <span id="userNameDisplay" style="color: white; margin-right: 1rem;"></span>
+          <button class="user-avatar" id="userAvatar">
+            <span id="userName">U</span>
+          </button>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/">Página Inicial</a>
+            <a href="#" id="profileLink">Perfil</a>
+            <a href="#" id="logoutBtn">Sair</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active" data-section="overview">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Visão Geral</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="events">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>Meus Eventos</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="create">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Criar Evento</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <!-- Visão Geral -->
+      <section id="overview" class="dashboard-section active">
+        <h1>Visão Geral</h1>
+        
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-icon" style="background: #dbeafe;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <h3 id="statTotalEvents">0</h3>
+              <p>Total de Eventos</p>
+            </div>
+          </div>
+
+          <div class="stat-box">
+            <div class="stat-icon" style="background: #d1fae5;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <h3 id="statActiveEvents">0</h3>
+              <p>Eventos Ativos</p>
+            </div>
+          </div>
+
+          <div class="stat-box">
+            <div class="stat-icon" style="background: #fef3c7;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <h3 id="statTotalEnrollments">0</h3>
+              <p>Total de Inscrições</p>
+            </div>
+          </div>
+
+          <div class="stat-box">
+            <div class="stat-icon" style="background: #fecaca;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <h3 id="statUpcomingEvents">0</h3>
+              <p>Eventos Próximos</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="recent-events">
+          <h2>Eventos Recentes</h2>
+          <div id="recentEventsList" class="events-list"></div>
+        </div>
+      </section>
+
+      <!-- Meus Eventos -->
+      <section id="events" class="dashboard-section">
+        <div class="section-header-dashboard">
+          <h1>Meus Eventos</h1>
+          <button class="btn btn-primary" id="btnCreateEvent">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Novo Evento
+          </button>
+        </div>
+
+        <div class="filters-dashboard">
+          <input type="text" id="dashboardSearchInput" placeholder="Buscar eventos..." class="input-field">
+          <select id="dashboardStatusFilter" class="input-field">
+            <option value="">Todos os Status</option>
+            <option value="active" selected>Ativos</option>
+            <option value="completed">Concluídos</option>
+            <option value="cancelled">Cancelados</option>
+          </select>
+        </div>
+
+        <div id="myEventsList" class="events-list"></div>
+      </section>
+
+      <!-- Criar/Editar Evento -->
+      <section id="create" class="dashboard-section">
+        <h1 id="formTitle">Criar Novo Evento</h1>
+        
+        <form id="eventForm" class="event-form">
+          <input type="hidden" id="eventId">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventTitle">Título do Evento *</label>
+              <input type="text" id="eventTitle" class="input-field" required minlength="5">
+            </div>
+
+            <div class="form-group">
+              <label for="eventCategory">Categoria *</label>
+              <select id="eventCategory" class="input-field" required>
+                <option value="">Selecione...</option>
+                <option value="tecnologia">Tecnologia</option>
+                <option value="negocios">Negócios</option>
+                <option value="educacao">Educação</option>
+                <option value="saude">Saúde</option>
+                <option value="esportes">Esportes</option>
+                <option value="cultura">Cultura</option>
+                <option value="entretenimento">Entretenimento</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="eventDescription">Descrição *</label>
+            <textarea id="eventDescription" class="input-field" required rows="4"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="eventLocation">Local *</label>
+            <input type="text" id="eventLocation" class="input-field" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventDate">Data *</label>
+              <input type="date" id="eventDate" class="input-field" required>
+            </div>
+
+            <div class="form-group">
+              <label for="eventTime">Horário *</label>
+              <input type="time" id="eventTime" class="input-field" required>
+            </div>
+
+            <div class="form-group">
+              <label for="eventCapacity">Capacidade *</label>
+              <input type="number" id="eventCapacity" class="input-field" required min="1">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="eventImage">Imagem do Evento</label>
+            <input type="file" id="eventImage" class="input-field" accept="image/*">
+            <small style="color: var(--secondary-color);">Formatos aceitos: JPG, PNG, WebP (máx. 5MB)</small>
+            <div id="imagePreview" style="margin-top: 1rem;"></div>
+          </div>
+
+          <div id="formError"></div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="btnCancelForm">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar Evento</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal Container -->
+  <div id="modalContainer"></div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

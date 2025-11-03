@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFlow - Gerenciamento de Eventos</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Navbar integrada com Hero -->
+  <header class="hero-section">
+    <nav class="navbar">
+      <div class="container nav-container">
+        <div class="logo">
+          <h2>Event<span>Flow</span></h2>
+        </div>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <!-- userMenu moved out of nav-menu so avatar sits to the right of hamburger on mobile -->
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="#home" class="nav-link">Início</a></li>
+          <li><a href="#events" class="nav-link">Eventos</a></li>
+          <li><a href="#about" class="nav-link">Sobre</a></li>
+          <li id="authButtons">
+            <a href="#" class="btn btn-outline" id="loginBtn">Entrar</a>
+            <a href="#" class="btn btn-primary" id="registerBtn">Cadastrar</a>
+          </li>
+        </ul>
+        <div id="userMenu" class="user-menu" style="display: none;">
+          <button class="user-avatar" id="userAvatar">
+            <span id="userName">U</span>
+          </button>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="#" id="myEventsLink">Meus Eventos</a>
+            <a href="#" id="myEnrollmentsLink">Minhas Inscrições</a>
+            <a href="#" id="dashboardLink" style="display: none;">Painel Admin</a>
+            <a href="#" id="profileLink">Perfil</a>
+            <a href="#" id="logoutBtn">Sair</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Content -->
+    <div class="hero-content">
+      <div class="container">
+        <div class="hero-text">
+          <h1>Organize e Participe dos Melhores Eventos</h1>
+          <p>Descubra eventos incríveis, inscreva-se facilmente e conecte-se com pessoas de interesses semelhantes.</p>
+          <div class="hero-buttons">
+            <a href="#events" class="btn btn-primary btn-large">Explorar Eventos</a>
+            <a href="/open-events.html" class="btn btn-outline btn-large">Eventos Abertos</a>
+            <a href="#" class="btn btn-outline btn-large" id="createEventBtn">Criar Evento</a>
+          </div>
+        </div>
+        <div class="hero-image">
+          <div class="hero-illustration">
+            <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="250" cy="200" r="150" fill="#1E40AF" opacity="0.1"/>
+              <rect x="150" y="100" width="200" height="250" rx="15" fill="#F97316"/>
+              <rect x="170" y="130" width="160" height="60" rx="10" fill="white"/>
+              <circle cx="250" cy="250" r="40" fill="white"/>
+              <path d="M 230 250 L 245 265 L 270 235" stroke="#22C55E" stroke-width="5" fill="none"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Seção de Filtros -->
+  <section class="filters-section" id="events">
+    <div class="container">
+      <div class="filters-container">
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Buscar eventos..." class="input-field">
+          <button class="btn btn-primary" id="searchBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+        </div>
+        <div class="filter-group">
+          <select id="categoryFilter" class="input-field">
+            <option value="">Todas Categorias</option>
+            <option value="tecnologia">Tecnologia</option>
+            <option value="negocios">Negócios</option>
+            <option value="educacao">Educação</option>
+            <option value="saude">Saúde</option>
+            <option value="esportes">Esportes</option>
+            <option value="cultura">Cultura</option>
+            <option value="entretenimento">Entretenimento</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seção de Eventos -->
+  <section class="events-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Eventos em Destaque</h2>
+        <p>Confira os eventos mais aguardados</p>
+      </div>
+      
+      <div id="eventsGrid" class="events-grid">
+        <!-- Eventos serão carregados dinamicamente aqui -->
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Carregando eventos...</p>
+        </div>
+      </div>
+
+      <div id="pagination" class="pagination"></div>
+    </div>
+  </section>
+
+  <!-- Seção Sobre -->
+  <section class="about-section" id="about">
+    <div class="container">
+      <div class="about-content">
+        <div class="about-text">
+          <h2>Sobre o EventFlow</h2>
+          <p>O EventFlow é a plataforma completa para gerenciamento de eventos. Aqui você pode:</p>
+          <ul class="feature-list">
+            <li>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Criar e gerenciar eventos facilmente</span>
+            </li>
+            <li>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Inscrever-se em eventos de seu interesse</span>
+            </li>
+            <li>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Acompanhar suas inscrições em tempo real</span>
+            </li>
+            <li>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Controlar capacidade e lista de participantes</span>
+            </li>
+          </ul>
+        </div>
+        <div class="about-stats">
+          <div class="stat-card">
+            <h3 id="totalEvents">0</h3>
+            <p>Eventos Ativos</p>
+          </div>
+          <div class="stat-card">
+            <h3 id="totalUsers">0</h3>
+            <p>Usuários Cadastrados</p>
+          </div>
+          <div class="stat-card">
+            <h3 id="totalEnrollments">0</h3>
+            <p>Inscrições Realizadas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <h3>Event<span>Flow</span></h3>
+          <p>Gerenciamento de eventos simplificado</p>
+        </div>
+        <div class="footer-links">
+          <h4>Links Rápidos</h4>
+          <ul>
+            <li><a href="#home">Início</a></li>
+            <li><a href="#events">Eventos</a></li>
+            <li><a href="#about">Sobre</a></li>
+          </ul>
+        </div>
+        <div class="footer-contact">
+          <h4>Contato</h4>
+          <p>contato@eventflow.com</p>
+          <p>(00) 0000-0000</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 EventFlow. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modals -->
+  <div id="modalContainer"></div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/events.js"></script>
+  <script src="/js/main.js"></script>
+</body>
+</html>
