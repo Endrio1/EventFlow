@@ -110,8 +110,10 @@ class EventsManager {
       <div class="event-card" data-event-id="${event.id}">
         <img src="${imageUrl}" alt="${event.title}" class="event-image" onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 400 200\\"><rect fill=\\"%231E40AF\\" width=\\"400\\" height=\\"200\\"/><text fill=\\"white\\" font-size=\\"24\\" x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".3em\\">Evento</text></svg>'">
         <div class="event-content">
-          ${salesBadge}
-          <span class="event-category">${event.category}</span>
+          <div class="event-badges-container">
+            ${salesBadge}
+            <span class="event-category">${event.category}</span>
+          </div>
           <h3 class="event-title">${event.title}</h3>
           <p class="event-description">${event.description}</p>
           
@@ -220,8 +222,10 @@ class EventsManager {
       const content = `
         ${imageUrl ? `<img src="${imageUrl}" alt="${event.title}" style="width: 100%; height: 250px; object-fit: cover; border-radius: var(--border-radius); margin-bottom: 1.5rem;">` : ''}
         
-        ${salesBadge}
-        <span class="event-category">${event.category}</span>
+        <div class="event-badges-container">
+          ${salesBadge}
+          <span class="event-category">${event.category}</span>
+        </div>
         <h3 style="margin: 1rem 0;">${event.title}</h3>
         <p style="color: var(--secondary-color); margin-bottom: 1.5rem;">${event.description}</p>
 
