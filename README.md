@@ -62,7 +62,16 @@ cd EventFlow
 npm install
 ```
 
-3. **Configure o banco de dados**
+3. **Instale os módulos necessários para PostgreSQL**
+```bash
+npm install dotenv pg pg-hstore
+```
+> **Nota:** Estes pacotes são essenciais para:
+> - `dotenv` - Carregar variáveis de ambiente do arquivo `.env`
+> - `pg` - Driver PostgreSQL para Node.js
+> - `pg-hstore` - Serialização/deserialização de dados hstore do PostgreSQL
+
+4. **Configure o banco de dados**
 
 Crie um banco de dados PostgreSQL:
 ```sql
@@ -76,7 +85,7 @@ Execute o script de inicialização do banco de dados:
 psql -U seu_usuario -d eventflow -f scripts/init_db.sql
 ```
 
-4. **Configure as variáveis de ambiente**
+5. **Configure as variáveis de ambiente**
 
 Crie um arquivo `.env` na raiz do projeto:
 ```bash
@@ -105,7 +114,7 @@ MAX_FILE_SIZE=5242880
 UPLOAD_PATH=./public/uploads/events
 ```
 
-5. **Inicie o servidor**
+6. **Inicie o servidor**
 ```bash
 # Desenvolvimento (com hot-reload)
 npm run dev
@@ -194,14 +203,6 @@ EventFlow/
 - **Erro**: `#EF4444` (Vermelho)
 - **Cards**: `#FFFFFF` (Branco)
 
-### Elementos de Design
-- **Glassmorphism** nos filtros e campos de busca
-- **Cards padronizados** com altura mínima de 520px
-- **Badges** com emojis para categorias
-- **Botões** com altura mínima de 44px (WCAG)
-- **Border-radius**: 8px, 12px, 20px, 50px (pills)
-- **Transições suaves**: 0.3s ease
-
 ## 🔑 Tipos de Usuário
 
 ### User (Participante)
@@ -210,15 +211,11 @@ EventFlow/
 - Gerenciar suas inscrições
 
 ### Organizer (Organizador)
-- Todas as funcionalidades de User
+- Todas as funcionalidades de Usuário
 - Criar e gerenciar eventos
 - Ver lista de participantes
 - Acessar painel administrativo
 
-### Admin (Administrador)
-- Todas as funcionalidades de Organizer
-- Gerenciar todos os eventos
-- Acesso completo ao sistema
 
 ## 🛠️ Tecnologias Utilizadas
 
