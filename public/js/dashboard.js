@@ -53,13 +53,28 @@ class DashboardManager {
     });
 
     // User menu
-    document.getElementById('userAvatar')?.addEventListener('click', () => {
-      document.getElementById('dropdownMenu')?.classList.toggle('show');
-    });
+    // Use event.stopPropagation() to avoid the global click handler closing the menu
+    const avatarBtn = document.getElementById('userAvatar');
+    const dropdown = document.getElementById('dropdownMenu');
+    if (avatarBtn) {
+      avatarBtn.addEventListener('click', (e) => {
+        try {
+          e.stopPropagation();
+        } catch (err) {
+          /* ignore */
+        }
+        // toggle and log for debugging
+        dropdown?.classList.toggle('show');
+        // small debug log (remove if not needed)
+        // console.log('User avatar clicked, dropdown visible:', dropdown?.classList.contains('show'));
+      });
+    }
 
+    // Close dropdown when clicking outside nav-right
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.nav-right')) {
-        document.getElementById('dropdownMenu')?.classList.remove('show');
+      // if click is outside nav-right, hide dropdown
+      if (!e.target.closest || !e.target.closest('.nav-right')) {
+        dropdown?.classList.remove('show');
       }
     });
 

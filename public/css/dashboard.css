@@ -17,6 +17,11 @@
   gap: 1rem;
 }
 
+.dashboard-header .user-menu {
+  display: block;
+  position: relative;
+}
+
 .dashboard-container {
   display: flex;
   min-height: calc(100vh - 80px);
