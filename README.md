@@ -2,10 +2,10 @@
 
 EventFlow é uma plataforma completa para gerenciamento de eventos que permite organizadores criarem e gerenciarem eventos, enquanto usuários podem facilmente descobrir e se inscrever em eventos de seu interesse.
 
-![EventFlow](https://img.shields.io/badge/Status-Incompleto-red)
+![EventFlow](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green)
 ![Express](https://img.shields.io/badge/Express-4.18-blue)
-![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-blue)
 
 ## ✨ Funcionalidades
 
@@ -22,21 +22,31 @@ EventFlow é uma plataforma completa para gerenciamento de eventos que permite o
 - 👥 **Gerenciar participantes** e lista de inscritos
 - 📊 **Painel administrativo** com estatísticas
 - 🎯 **Controle de capacidade** automático
+- 🔒 **Controle de vendas** (abrir/fechar inscrições)
+- ⭐ **Visualizar avaliações** dos participantes
+
+### Sistema de Avaliações
+- ⭐ **Avaliar eventos** (notas de 1 a 5)
+- 💬 **Comentários** sobre a experiência
+- 📝 **Editar e excluir** suas próprias avaliações
+- 🔒 **Uma avaliação por usuário** por evento
 
 ### Recursos Técnicos
 - 🛡️ **API RESTful** completa
 - 🔒 **Autenticação JWT** segura
 - 📸 **Upload de imagens** com Multer
-- 🗄️ **MySQL com Sequelize ORM**
-- 🎨 **Design moderno** com CSS customizado
+- 🗄️ **PostgreSQL com Sequelize ORM**
+- 🎨 **Design moderno** com gradientes e glassmorphism
+- 🎯 **Filtros e busca** em tempo real
 - ⚡ **Performance otimizada**
+- 📱 **Interface responsiva** mobile-first
 
 ## 🚀 Começando
 
 ### Pré-requisitos
 
 - Node.js 18+ 
-- MySQL 8.0+
+- PostgreSQL 14+
 - npm ou yarn
 
 ### Instalação
@@ -54,16 +64,23 @@ npm install
 
 3. **Configure o banco de dados**
 
-Crie um banco de dados MySQL:
+Crie um banco de dados PostgreSQL:
 ```sql
 CREATE DATABASE eventflow;
 ```
 
+Copie o script de inicialização para a query do banco dentro da aplicação PgAdmin 
+ou
+Execute o script de inicialização do banco de dados:
+```bash
+psql -U seu_usuario -d eventflow -f scripts/init_db.sql
+```
+
 4. **Configure as variáveis de ambiente**
 
-Copie o arquivo `.env.example` para `.env`:
+Crie um arquivo `.env` na raiz do projeto:
 ```bash
-cp .env.example .env
+touch .env
 ```
 
 Edite o arquivo `.env` com suas configurações:
@@ -71,10 +88,14 @@ Edite o arquivo `.env` com suas configurações:
 PORT=3000
 NODE_ENV=development
 
+# Opção 1: URL completa do banco (recomendado)
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/eventflow
+
+# Opção 2: Configuração individual
 DB_HOST=localhost
-DB_PORT=3306
+DB_PORT=5432
 DB_NAME=eventflow
-DB_USER=root
+DB_USER=seu_usuario
 DB_PASSWORD=sua_senha
 
 JWT_SECRET=seu_secret_super_secreto_aqui
@@ -103,54 +124,83 @@ npm start
 EventFlow/
 ├── src/
 │   ├── config/
-│   │   ├── database.js      # Configuração do Sequelize
-│   │   └── multer.js         # Configuração de upload
+│   │   ├── database.js           # Configuração do Sequelize + PostgreSQL
+│   │   └── multer.js             # Configuração de upload
 │   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── eventController.js
-│   │   └── enrollmentController.js
+│   │   ├── authController.js     # Autenticação e registro
+│   │   ├── eventController.js    # CRUD de eventos
+│   │   ├── enrollmentController.js # Gerenciamento de inscrições
+│   │   └── feedbackController.js  # Sistema de avaliações
 │   ├── middlewares/
-│   │   ├── auth.js           # Autenticação JWT
-│   │   └── errorHandler.js  # Tratamento de erros
+│   │   ├── auth.js               # Autenticação JWT
+│   │   └── errorHandler.js       # Tratamento de erros
 │   ├── models/
-│   │   ├── User.js
-│   │   ├── Event.js
-│   │   ├── Enrollment.js
-│   │   └── index.js          # Associações
+│   │   ├── User.js               # Modelo de usuários
+│   │   ├── Event.js              # Modelo de eventos
+│   │   ├── Enrollment.js         # Modelo de inscrições
+│   │   ├── Feedback.js           # Modelo de avaliações
+│   │   └── index.js              # Associações entre modelos
 │   ├── routes/
 │   │   ├── authRoutes.js
 │   │   ├── eventRoutes.js
 │   │   ├── enrollmentRoutes.js
+│   │   ├── feedbackRoutes.js     # Rotas de avaliações
 │   │   └── index.js
-│   └── server.js             # Servidor Express
+│   └── server.js                 # Servidor Express
+├── scripts/
+│   └── init_db.sql               # Script de inicialização do banco
 ├── public/
 │   ├── css/
-│   │   ├── style.css
-│   │   └── dashboard.css
+│   │   ├── style.css             # Estilos principais (gradientes, glassmorphism)
+│   │   └── dashboard.css         # Estilos do dashboard
 │   ├── js/
-│   │   ├── api.js
-│   │   ├── auth.js
-│   │   ├── events.js
-│   │   ├── main.js
-│   │   └── dashboard.js
-│   ├── index.html
-│   └── dashboard.html
-├── .env.example
+│   │   ├── api.js                # Comunicação com API
+│   │   ├── auth.js               # Autenticação frontend
+│   │   ├── events.js             # Gerenciamento de eventos
+│   │   ├── main.js               # Script principal
+│   │   ├── dashboard.js          # Painel administrativo
+│   │   ├── open-events.js        # Página de eventos abertos
+│   │   └── utils.js              # Funções utilitárias
+│   ├── uploads/
+│   │   └── events/               # Imagens dos eventos
+│   ├── index.html                # Página principal
+│   ├── dashboard.html            # Painel do organizador
+│   └── open-events.html          # Lista de eventos abertos
+├── .env
 ├── .gitignore
 ├── package.json
 ├── LICENSE
-└── README.md
+├── README.md
+├── API_DOCUMENTATION.md          # Documentação completa da API
+└── QUICK_START.md                # Guia rápido de início
 ```
 
-## 🎨 Paleta de Cores
+## 🎨 Design System
 
-- **Primária (Azul petróleo)**: `#1E40AF`
-- **Secundária (Cinza azulado)**: `#64748B`
-- **Fundo (Branco gelo)**: `#F1F5F9`
-- **Texto principal (Preto suave)**: `#0F172A`
-- **Destaques (Laranja suave)**: `#F97316`
-- **Sucesso (Verde suave)**: `#22C55E`
-- **Erro/Alerta (Vermelho coral)**: `#EF4444`
+### Paleta de Cores
+
+**Gradiente Principal (Hero Section)**
+- Roxo: `#667eea`
+- Violeta: `#764ba2`
+- Rosa: `#f093fb`
+- Gradiente: `linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)`
+
+**Cores de Interface**
+- **Fundo Principal**: `#f0f4f8` (Azulado claro)
+- **Texto Principal**: `#0F172A` (Preto suave)
+- **Texto Secundário**: `#64748B` (Cinza azulado)
+- **Destaques**: `#F97316` (Laranja)
+- **Sucesso**: `#22C55E` (Verde)
+- **Erro**: `#EF4444` (Vermelho)
+- **Cards**: `#FFFFFF` (Branco)
+
+### Elementos de Design
+- **Glassmorphism** nos filtros e campos de busca
+- **Cards padronizados** com altura mínima de 520px
+- **Badges** com emojis para categorias
+- **Botões** com altura mínima de 44px (WCAG)
+- **Border-radius**: 8px, 12px, 20px, 50px (pills)
+- **Transições suaves**: 0.3s ease
 
 ## 🔑 Tipos de Usuário
 
@@ -173,20 +223,31 @@ EventFlow/
 ## 🛠️ Tecnologias Utilizadas
 
 ### Backend
-- **Node.js** - Runtime JavaScript
-- **Express.js** - Framework web
-- **Sequelize** - ORM para MySQL
-- **MySQL** - Banco de dados relacional
-- **JWT** - Autenticação
-- **bcryptjs** - Hash de senhas
-- **Multer** - Upload de arquivos
-- **express-validator** - Validação de dados
+- **Node.js 18+** – Ambiente de execução JavaScript
+- **Express.js 4.18** – Framework web minimalista e robusto
+- **PostgreSQL 14+** – Banco de dados relacional com suporte a JSON e queries avançadas
+- **Sequelize ORM** – Mapeamento objeto-relacional para Node.js
+- **pg / pg-hstore** – Driver PostgreSQL para Node.js
+- **bcryptjs** – Criptografia segura de senhas (hash + salt)
+- **JWT (jsonwebtoken)** – Autenticação stateless via tokens
+- **Multer** – Middleware para upload de arquivos multimídia
 
 ### Frontend
-- **HTML5** - Estrutura
-- **CSS3** - Estilização
-- **JavaScript (Vanilla)** - Interatividade
-- **Fetch API** - Comunicação com backend
+- **HTML5** – Estrutura semântica das páginas
+- **CSS3** – Estilização moderna com:
+  - CSS Custom Properties (variáveis)
+  - Flexbox e CSS Grid
+  - Gradientes e Glassmorphism
+  - Media Queries (responsividade)
+- **JavaScript (ES6+)** – Programação modular com:
+  - Fetch API para requisições
+  - Async/Await
+  - Event Delegation
+  - Debouncing de inputs
+
+### DevOps
+- **Git** – Controle de versão
+- **npm** – Gerenciador de pacotes
 
 
 ## 🔒 Segurança
@@ -236,12 +297,24 @@ Se você tiver alguma dúvida ou problema, por favor:
 - Abra uma [issue](https://github.com/Endrio1/EventFlow/issues)
 - Entre em contato: contato@eventflow.com
 
-## 🎯 Roadmap Futuro
+## 🚀 Roadmap
 
+### ✅ Concluído
+- [x] Sistema de autenticação completo (JWT + bcrypt)
+- [x] CRUD de eventos com upload de imagens
+- [x] Inscrições com validação de vagas e datas
+- [x] Sistema de avaliações (feedbacks) com estrelas e comentários
+- [x] Design system moderno com gradientes e glassmorphism
+- [x] Busca e filtros por categoria na página de eventos abertos
+- [x] Dashboard do organizador com menu dropdown
+
+### 🚧 Em Desenvolvimento
 - [ ] Sistema de notificações por email
-- [ ] Sistema de avaliações de eventos
-- [ ] Geração de certificados
-- [ ] Integração com pagamentos
+- [ ] Exportação de listas de participantes (CSV/PDF)
+
+### 📅 Planejado
+- [ ] Integração com APIs de pagamento (Stripe/Mercado Pago)
+
 
 ---
 
