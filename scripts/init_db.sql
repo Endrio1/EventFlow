@@ -1,80 +1,123 @@
--- scripts/init_db.sql
--- Script de inicialização do banco de dados para o projeto EventFlow
--- Ajuste valores de usuário/senha conforme necessário antes de executar.
+-- Complete migration for EventFlow (Postgres)
+-- This file consolidates the database DDL changes made during development.
+-- Run with: psql -d <db> -f scripts/complete_migration.sql
 
--- 1) Criar o banco de dados (se já existir, ignore a linha)
-CREATE DATABASE IF NOT EXISTS `eventflow` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- IMPORTANT NOTES:
+-- 1) If your database already contains data (especially in "avaliacoes"),
+--    make sure to check and remove duplicates on (evento_id, usuario_id)
+--    BEFORE applying the unique index/constraint. See the section "Remove duplicates".
+-- 2) This script uses "CREATE ... IF NOT EXISTS" where applicable so it is safe
+--    to run multiple times (idempotent in most parts).
+-- 3) Review and adapt timestamps/column names to match your current schema if needed.
 
--- Se quiser criar um usuário específico (opcional), descomente e ajuste as linhas abaixo:
--- CREATE USER 'eventflow_user'@'localhost' IDENTIFIED BY 'SUA_SENHA_SEMPLANTILHAS';
--- GRANT ALL PRIVILEGES ON `eventflow`.* TO 'eventflow_user'@'localhost';
--- FLUSH PRIVILEGES;
+BEGIN;
 
--- Usar o banco criado
-USE `eventflow`;
+-- =========================
+-- 1) USERS (usuarios)
+-- =========================
+CREATE TABLE IF NOT EXISTS usuarios (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  senha VARCHAR(255) NOT NULL,
+  papel VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (papel IN ('user','organizer','admin')),
+  avatar VARCHAR(255),
+  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  atualizado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
 
--- 2) Tabelas
--- Tabela: usuarios
-CREATE TABLE IF NOT EXISTS `usuarios` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `nome` VARCHAR(100) NOT NULL,
-  `email` VARCHAR(150) NOT NULL,
-  `senha` VARCHAR(255) NOT NULL,
-  `papel` ENUM('user','organizer','admin') NOT NULL DEFAULT 'user',
-  `avatar` VARCHAR(255) DEFAULT NULL,
-  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `usuarios_email_unique` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- =========================
+-- 2) EVENTS (eventos)
+-- =========================
+CREATE TABLE IF NOT EXISTS eventos (
+  id SERIAL PRIMARY KEY,
+  titulo VARCHAR(200) NOT NULL,
+  descricao TEXT NOT NULL,
+  categoria VARCHAR(50) NOT NULL,
+  imagem VARCHAR(255),
+  local VARCHAR(255) NOT NULL,
+  data DATE NOT NULL,
+  horario VARCHAR(10) NOT NULL,
+  capacidade INTEGER NOT NULL,
+  inscricoes_atuais INTEGER NOT NULL DEFAULT 0,
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active','cancelled','completed')),
+  organizador_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  vendas_fechadas BOOLEAN NOT NULL DEFAULT false,
+  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  atualizado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
 
--- Tabela: eventos
-CREATE TABLE IF NOT EXISTS `eventos` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `titulo` VARCHAR(200) NOT NULL,
-  `descricao` TEXT NOT NULL,
-  `categoria` VARCHAR(50) NOT NULL,
-  `imagem` VARCHAR(255) DEFAULT NULL,
-  `local` VARCHAR(255) NOT NULL,
-  `data` DATE NOT NULL,
-  `horario` VARCHAR(5) NOT NULL,
-  `capacidade` INT NOT NULL,
-  `inscricoes_atuais` INT NOT NULL DEFAULT 0,
-  `status` ENUM('active','cancelled','completed') NOT NULL DEFAULT 'active',
-  `organizador_id` INT NOT NULL,
-  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`id`),
-  KEY `eventos_organizador_idx` (`organizador_id`),
-  CONSTRAINT `eventos_organizador_fk` FOREIGN KEY (`organizador_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Indexes for events
+CREATE INDEX IF NOT EXISTS idx_eventos_data ON eventos(data);
+CREATE INDEX IF NOT EXISTS idx_eventos_categoria ON eventos(categoria);
 
--- Tabela: inscricoes
-CREATE TABLE IF NOT EXISTS `inscricoes` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `usuario_id` INT NOT NULL,
-  `evento_id` INT NOT NULL,
-  `status` ENUM('confirmed','cancelled','attended') NOT NULL DEFAULT 'confirmed',
-  `data_inscricao` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `inscricoes_usuario_evento_unique` (`usuario_id`,`evento_id`),
-  KEY `inscricoes_usuario_idx` (`usuario_id`),
-  KEY `inscricoes_evento_idx` (`evento_id`),
-  CONSTRAINT `inscricoes_usuario_fk` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `inscricoes_evento_fk` FOREIGN KEY (`evento_id`) REFERENCES `eventos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- =========================
+-- 3) ENROLLMENTS (inscricoes)
+-- =========================
+CREATE TABLE IF NOT EXISTS inscricoes (
+  id SERIAL PRIMARY KEY,
+  usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+  status VARCHAR(20) NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed','cancelled','attended')),
+  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  UNIQUE(usuario_id, evento_id)
+);
 
--- 3) Índices e otimizações adicionais (opcionais)
--- Índice para busca por data e categoria
-CREATE INDEX IF NOT EXISTS `eventos_data_idx` ON `eventos` (`data`);
-CREATE INDEX IF NOT EXISTS `eventos_categoria_idx` ON `eventos` (`categoria`);
+CREATE INDEX IF NOT EXISTS idx_inscricoes_usuario ON inscricoes(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_inscricoes_evento ON inscricoes(evento_id);
 
--- 4) Exemplo de inserção inicial (opcional)
--- INSERT INTO `usuarios` (`nome`,`email`,`senha`,`papel`) VALUES ('Admin','admin@example.com','$2a$10$EXEMPLO_HASH_SENHA','admin');
+-- =========================
+-- 4) FEEDBACKS (avaliacoes)
+-- =========================
+-- Create table if not exists (includes UNIQUE(evento_id, usuario_id))
+CREATE TABLE IF NOT EXISTS avaliacoes (
+  id SERIAL PRIMARY KEY,
+  evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+  usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  nota INTEGER NOT NULL CHECK (nota >= 1 AND nota <= 5),
+  comentario TEXT,
+  criado_em TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(evento_id, usuario_id)
+);
 
--- FIM do script
+CREATE INDEX IF NOT EXISTS idx_avaliacoes_evento_id ON avaliacoes(evento_id);
 
--- Observações:
--- 1) Execute esse script em um cliente MySQL (mysql CLI, MySQL Workbench ou phpMyAdmin).
--- 2) Se desejar que o Node.js crie o banco automaticamente, crie um pequeno script que conecte ao MySQL sem selecionar um database e execute os comandos acima.
--- 3) Ajuste collation/charset conforme sua necessidade.
+-- =========================
+-- 5) Optional: If you already created avaliacoes earlier without the UNIQUE constraint,
+--    and you received an error about duplicates, use the block below to remove duplicates
+--    while keeping the most recent row per (evento_id, usuario_id). This block is
+--    commented out by default. Uncomment and run if you need to de-duplicate.
+--
+-- NOTE: This will create a backup table `avaliacoes_backup` before deleting rows.
+--
+-- BEGIN;
+--
+-- -- backup
+-- CREATE TABLE IF NOT EXISTS avaliacoes_backup AS TABLE avaliacoes;
+--
+-- -- delete duplicates, keep most recent (by criado_em, then id)
+-- WITH ranked AS (
+--   SELECT id,
+--     ROW_NUMBER() OVER (PARTITION BY evento_id, usuario_id ORDER BY criado_em DESC, id DESC) AS rn
+--   FROM avaliacoes
+-- )
+-- DELETE FROM avaliacoes
+-- WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+--
+-- COMMIT;
+
+-- If you performed the deduplication step above, apply the unique index now.
+-- If the table was created above with the UNIQUE constraint, this step will be a no-op.
+--
+-- CREATE UNIQUE INDEX IF NOT EXISTS unique_avaliacoes_evento_usuario ON avaliacoes(evento_id, usuario_id);
+
+-- =========================
+-- 6) Extras / compatibility
+-- =========================
+-- If you want to ensure the events table has the vendas_fechadas column (for older DBs):
+ALTER TABLE eventos ADD COLUMN IF NOT EXISTS vendas_fechadas BOOLEAN NOT NULL DEFAULT false;
+
+-- Final commit
+COMMIT;
+
+-- End of migration
