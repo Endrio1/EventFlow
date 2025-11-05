@@ -9,7 +9,7 @@ class EnrollmentController {
 
       // Verificar evento e condições, fazer incremento atômico se possível
       // Verificar se já está inscrito
-      const existing = await Enrollment.findOne({ user_id: userId, event_id: eventId });
+        const existing = await Enrollment.findOne({ usuario_id: userId, evento_id: eventId });
       if (existing) {
         return res.status(400).json({ success: false, message: existing.status === 'cancelled' ? 'Você cancelou sua inscrição anteriormente. Contate o organizador.' : 'Você já está inscrito neste evento' });
       }
@@ -17,8 +17,8 @@ class EnrollmentController {
       // Tentar incrementar contador de inscrições de forma condicional
       const now = new Date();
       const event = await Event.findOneAndUpdate(
-        { _id: eventId, status: 'active', sales_closed: false, date: { $gt: now }, $expr: { $lt: ['$current_enrollments', '$capacity'] } },
-        { $inc: { current_enrollments: 1 } },
+          { _id: eventId, status: 'active', vendas_encerradas: false, data: { $gt: now }, $expr: { $lt: ['$inscricoes_atuais', '$capacidade'] } },
+          { $inc: { inscricoes_atuais: 1 } },
         { new: true }
       );
 
@@ -29,16 +29,16 @@ class EnrollmentController {
       // Criar inscrição
       let enrollment;
       try {
-        enrollment = new Enrollment({ user_id: userId, event_id: eventId, status: 'confirmed' });
+          enrollment = new Enrollment({ usuario_id: userId, evento_id: eventId, status: 'confirmed' });
         await enrollment.save();
       } catch (err) {
         // Se falha por duplicidade, reverter incremento
         if (err.code === 11000) {
-          await Event.findByIdAndUpdate(eventId, { $inc: { current_enrollments: -1 } });
+            await Event.findByIdAndUpdate(eventId, { $inc: { inscricoes_atuais: -1 } });
           return res.status(400).json({ success: false, message: 'Você já está inscrito neste evento' });
         }
         // Reverter incremento e repassar erro
-        await Event.findByIdAndUpdate(eventId, { $inc: { current_enrollments: -1 } });
+          await Event.findByIdAndUpdate(eventId, { $inc: { inscricoes_atuais: -1 } });
         throw err;
       }
 
@@ -55,7 +55,7 @@ class EnrollmentController {
       const userId = req.userId;
 
       // Buscar inscrição
-      const enrollment = await Enrollment.findOne({ user_id: userId, event_id: eventId });
+        const enrollment = await Enrollment.findOne({ usuario_id: userId, evento_id: eventId });
       if (!enrollment) return res.status(404).json({ success: false, message: 'Inscrição não encontrada' });
 
       if (enrollment.status === 'cancelled') return res.status(400).json({ success: false, message: 'Esta inscrição já foi cancelada' });
@@ -65,7 +65,7 @@ class EnrollmentController {
       await enrollment.save();
 
       // Atualizar contador de inscrições de forma segura
-      await Event.findByIdAndUpdate(eventId, { $inc: { current_enrollments: -1 } });
+        await Event.findByIdAndUpdate(eventId, { $inc: { inscricoes_atuais: -1 } });
 
       return res.json({ success: true, message: 'Inscrição cancelada com sucesso' });
     } catch (error) {
@@ -77,7 +77,7 @@ class EnrollmentController {
   async myEnrollments(req, res, next) {
     try {
       const userId = req.userId;
-      const enrollments = await Enrollment.find({ user_id: userId }).sort({ enrollment_date: -1 }).populate({ path: 'event_id', populate: { path: 'organizer_id', select: 'name email' } });
+        const enrollments = await Enrollment.find({ usuario_id: userId }).sort({ data_inscricao: -1 }).populate({ path: 'evento_id', populate: { path: 'organizador_id', select: 'nome email' } });
       return res.json({ success: true, data: enrollments });
     } catch (error) {
       next(error);
@@ -92,12 +92,12 @@ class EnrollmentController {
       const event = await Event.findById(eventId);
       if (!event) return res.status(404).json({ success: false, message: 'Evento não encontrado' });
 
-      if (event.organizer_id.toString() !== req.userId && req.userRole !== 'admin') return res.status(403).json({ success: false, message: 'Você não tem permissão para ver os participantes deste evento' });
+  if (event.organizador_id.toString() !== req.userId && req.userRole !== 'admin') return res.status(403).json({ success: false, message: 'Você não tem permissão para ver os participantes deste evento' });
 
       // Buscar participantes
-      const enrollments = await Enrollment.find({ event_id: eventId }).populate('user_id', 'name email').sort({ enrollment_date: -1 });
+        const enrollments = await Enrollment.find({ evento_id: eventId }).populate('usuario_id', 'nome email').sort({ data_inscricao: -1 });
 
-      return res.json({ success: true, data: { event: { id: event._id, title: event.title, capacity: event.capacity, current_enrollments: event.current_enrollments }, enrollments } });
+  return res.json({ success: true, data: { event: { id: event._id, title: event.titulo, capacity: event.capacidade, current_enrollments: event.inscricoes_atuais }, enrollments } });
     } catch (error) {
       next(error);
     }

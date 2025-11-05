@@ -105,11 +105,13 @@ class EventsManager {
   const showCapacity = currentUser && (currentUser.role === 'organizer' || currentUser.role === 'admin');
   const salesBadge = event.sales_closed ? `<span class="sales-closed-badge">Vendas Fechadas</span>` : '';
 
-    const imageUrl = event.image ? `http://localhost:3000${event.image}` : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%231E40AF" width="400" height="200"/><text fill="white" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">Evento</text></svg>';
+      const fallbackSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="#1E40AF" width="400" height="200"/><text fill="white" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">Evento</text></svg>';
+      const fallbackDataUrl = 'data:image/svg+xml,' + encodeURIComponent(fallbackSvg);
+      const imageUrl = event.image ? `http://localhost:3000${event.image}` : fallbackDataUrl;
 
     return `
       <div class="event-card" data-event-id="${eventId}">
-        <img src="${imageUrl}" alt="${event.title}" class="event-image" onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 400 200\\"><rect fill=\\"%231E40AF\\" width=\\"400\\" height=\\"200\\"/><text fill=\\"white\\" font-size=\\"24\\" x=\\"50%\\" y=\\"50%\\" text-anchor=\\"middle\\" dy=\\".3em\\">Evento</text></svg>'">
+          <img src="${imageUrl}" alt="${event.title}" class="event-image" onerror="this.src='${fallbackDataUrl}'">
         <div class="event-content">
           ${salesBadge}
           <span class="event-category">${event.category}</span>

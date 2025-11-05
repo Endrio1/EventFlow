@@ -38,7 +38,7 @@ class EventController {
 
       const count = await Event.countDocuments(filter);
       const eventsFound = await Event.find(filter)
-        .populate('organizer_id', 'name email')
+        .populate('organizador_id', 'nome email')
         .sort({ [sortBy]: order.toUpperCase() === 'ASC' ? 1 : -1 })
         .skip(parseInt(offset))
         .limit(parseInt(limit));
@@ -46,7 +46,7 @@ class EventController {
       // Normalize para frontend: fornecer `organizer` em vez de `organizer_id`
       const events = eventsFound.map(ev => {
         const obj = ev.toObject();
-        obj.organizer = obj.organizer_id || null;
+        obj.organizer = obj.organizador_id || null;
         return obj;
       });
 
@@ -60,16 +60,16 @@ class EventController {
   async show(req, res, next) {
     try {
       const { id } = req.params;
-      const event = await Event.findById(id).populate('organizer_id', 'name email');
+  const event = await Event.findById(id).populate('organizador_id', 'nome email');
       if (!event) return res.status(404).json({ success: false, message: 'Evento não encontrado' });
 
       // Buscar participantes confirmados
-      const participants = await Enrollment.find({ event_id: id, status: 'confirmed' }).populate('user_id', 'name email');
+    const participants = await Enrollment.find({ evento_id: id, status: 'confirmed' }).populate('usuario_id', 'nome email');
 
-  const eventObj = event.toObject();
-  // Normalizar nome do organizador para a propriedade `organizer` (compatibilidade frontend)
-  eventObj.organizer = eventObj.organizer_id || null;
-  eventObj.participants = participants.map(p => ({ status: p.status, enrollment_date: p.enrollment_date, user: p.user_id }));
+    const eventObj = event.toObject();
+    // Normalizar nome do organizador para a propriedade `organizer` (compatibilidade frontend)
+    eventObj.organizer = eventObj.organizador_id || null;
+    eventObj.participants = participants.map(p => ({ status: p.status, enrollment_date: p.data_inscricao, user: p.usuario_id }));
 
       return res.json({ success: true, data: eventObj });
     } catch (error) {
@@ -124,7 +124,7 @@ class EventController {
         time,
         capacity: parseInt(capacity),
         image: req.file ? `/uploads/events/${req.file.filename}` : null,
-        organizer_id: req.userId
+        organizador_id: req.userId
       });
       await event.save();
 
@@ -174,7 +174,7 @@ class EventController {
       }
 
       // Verificar se usuário é o organizador
-      if (event.organizer_id.toString() !== req.userId && req.userRole !== 'admin') {
+  if (event.organizador_id.toString() !== req.userId && req.userRole !== 'admin') {
         if (req.file) fs.unlinkSync(req.file.path);
         return res.status(403).json({ success: false, message: 'Você não tem permissão para editar este evento' });
       }
@@ -216,7 +216,7 @@ class EventController {
       if (!event) return res.status(404).json({ success: false, message: 'Evento não encontrado' });
 
       // Verificar permissão
-      if (event.organizer_id.toString() !== req.userId && req.userRole !== 'admin') {
+  if (event.organizador_id.toString() !== req.userId && req.userRole !== 'admin') {
         return res.status(403).json({ success: false, message: 'Você não tem permissão para deletar este evento' });
       }
 
@@ -237,17 +237,17 @@ class EventController {
   // Listar eventos do organizador
   async myEvents(req, res, next) {
     try {
-      const events = await Event.find({ organizer_id: req.userId }).sort({ date: 1 });
+  const events = await Event.find({ organizador_id: req.userId }).sort({ date: 1 });
 
       // Para cada evento, incluir participantes (opcional para economizar queries podemos omitir)
-      const results = [];
-      for (const ev of events) {
-        const participants = await Enrollment.find({ event_id: ev._id }).populate('user_id', 'name email');
-        const evObj = ev.toObject();
-        evObj.organizer = evObj.organizer_id || null;
-        evObj.participants = participants.map(p => ({ status: p.status, enrollment_date: p.enrollment_date, user: p.user_id }));
-        results.push(evObj);
-      }
+        const results = [];
+        for (const ev of events) {
+          const participants = await Enrollment.find({ evento_id: ev._id }).populate('usuario_id', 'nome email');
+          const evObj = ev.toObject();
+          evObj.organizer = evObj.organizador_id || null;
+          evObj.participants = participants.map(p => ({ status: p.status, enrollment_date: p.data_inscricao, user: p.usuario_id }));
+          results.push(evObj);
+        }
 
       return res.json({ success: true, data: results });
     } catch (error) {
@@ -264,11 +264,10 @@ class EventController {
       if (!event) return res.status(404).json({ success: false, message: 'Evento não encontrado' });
 
       // Apenas o organizador do evento ou admin podem alterar
-      if (event.organizer_id.toString() !== req.userId && req.userRole !== 'admin') {
+      if (event.organizador_id.toString() !== req.userId && req.userRole !== 'admin') {
         return res.status(403).json({ success: false, message: 'Você não tem permissão para esta ação' });
       }
-
-      event.sales_closed = !!closed;
+      event.vendas_encerradas = !!closed;
       await event.save();
 
       return res.json({ success: true, message: `Vendas ${event.sales_closed ? 'encerradas' : 'reabertas'} com sucesso`, data: event });

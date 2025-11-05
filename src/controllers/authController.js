@@ -5,10 +5,14 @@ class AuthController {
   // Registro de novo usuário
   async register(req, res, next) {
     try {
-      const { name, email, password, role } = req.body;
+      // Aceitar campos em português ou inglês para compatibilidade com frontend
+      const nome = req.body.nome || req.body.name;
+      const email = req.body.email;
+      const senha = req.body.senha || req.body.password;
+      const papel = req.body.papel || req.body.role;
 
       // Validações básicas
-      if (!name || !email || !password) {
+      if (!nome || !email || !senha) {
         return res.status(400).json({
           success: false,
           message: 'Nome, email e senha são obrigatórios'
@@ -21,8 +25,8 @@ class AuthController {
         return res.status(400).json({ success: false, message: 'Este email já está cadastrado' });
       }
 
-      // Criar novo usuário
-      const user = new User({ name, email, password, role: role || 'user' });
+  // Criar novo usuário (usar campos persistidos em português)
+  const user = new User({ nome, email, senha, papel: papel || 'user' });
       await user.save();
 
       // Gerar token JWT (verificar se secret está configurado)
@@ -49,10 +53,12 @@ class AuthController {
   // Login
   async login(req, res, next) {
     try {
-      const { email, password } = req.body;
+      // Aceitar 'senha' ou 'password' enviados pelo cliente
+      const email = req.body.email;
+      const senha = req.body.senha || req.body.password;
 
       // Validações
-      if (!email || !password) {
+      if (!email || !senha) {
         return res.status(400).json({
           success: false,
           message: 'Email e senha são obrigatórios'
@@ -63,8 +69,8 @@ class AuthController {
       const user = await User.findOne({ email });
       if (!user) return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
 
-      // Verificar senha
-      const isPasswordValid = await user.comparePassword(password);
+      // Verificar senha (método comparePassword trata ausência de hash)
+      const isPasswordValid = await user.comparePassword(senha);
       if (!isPasswordValid) {
         return res.status(401).json({
           success: false,
@@ -96,7 +102,8 @@ class AuthController {
   // Obter perfil do usuário autenticado
   async getProfile(req, res, next) {
     try {
-      const user = await User.findById(req.userId).select('-password');
+      // Excluir o campo persistido de senha ('senha') ao retornar o perfil
+      const user = await User.findById(req.userId).select('-senha');
       if (!user) return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
       return res.json({ success: true, data: user });
     } catch (error) {
@@ -107,12 +114,14 @@ class AuthController {
   // Atualizar perfil
   async updateProfile(req, res, next) {
     try {
-      const { name, email } = req.body;
+      // Aceitar 'nome' ou 'name'
+      const nome = req.body.nome || req.body.name;
+      const email = req.body.email;
       const user = await User.findById(req.userId);
       if (!user) return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
 
       // Atualizar campos
-      if (name) user.name = name;
+      if (nome) user.nome = nome;
       if (email) user.email = email;
 
       await user.save();
@@ -126,7 +135,9 @@ class AuthController {
   // Alterar senha
   async changePassword(req, res, next) {
     try {
-      const { currentPassword, newPassword } = req.body;
+      // Aceitar tanto nomes em inglês quanto em português
+      const currentPassword = req.body.currentPassword || req.body.currentSenha || req.body.senha;
+      const newPassword = req.body.newPassword || req.body.novaSenha || req.body.password;
 
       if (!currentPassword || !newPassword) {
         return res.status(400).json({
@@ -147,9 +158,9 @@ class AuthController {
         });
       }
 
-      // Atualizar senha
-      user.password = newPassword;
-      await user.save();
+  // Atualizar senha (salvar no campo persistido 'senha' para consistência)
+  user.senha = newPassword;
+  await user.save();
 
       return res.json({
         success: true,

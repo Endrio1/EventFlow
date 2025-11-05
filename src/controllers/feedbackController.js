@@ -20,7 +20,7 @@ class FeedbackController {
       }
 
       // Verificar se usuário participou (tem inscrição confirmada ou 'attended')
-      const participation = await Enrollment.findOne({ user_id: req.userId, event_id: eventoId, status: { $in: ['confirmed', 'attended'] } });
+  const participation = await Enrollment.findOne({ usuario_id: req.userId, evento_id: eventoId, status: { $in: ['confirmed', 'attended'] } });
 
       if (!participation) {
         return res.status(403).json({ success: false, message: 'Apenas participantes podem avaliar este evento' });
@@ -31,7 +31,7 @@ class FeedbackController {
       await feedback.save();
 
       // Incluir user simples no retorno
-      const result = await Feedback.findById(feedback._id).populate('usuario_id', 'name email');
+  const result = await Feedback.findById(feedback._id).populate('usuario_id', 'nome email');
 
       return res.status(201).json({ success: true, message: 'Feedback enviado', data: result });
     } catch (error) {
@@ -62,7 +62,7 @@ class FeedbackController {
 
       const count = await Feedback.countDocuments({ evento_id: eventoId });
       const rows = await Feedback.find({ evento_id: eventoId })
-        .populate('usuario_id', 'name')
+        .populate('usuario_id', 'nome')
         .sort({ [sortBy]: order === 'ASC' ? 1 : -1 })
         .skip(offset)
         .limit(limit);
@@ -95,7 +95,7 @@ class FeedbackController {
 
       await feedback.save();
 
-      const result = await Feedback.findById(feedback._id).populate('usuario_id', 'name');
+  const result = await Feedback.findById(feedback._id).populate('usuario_id', 'nome');
       return res.json({ success: true, message: 'Avaliação atualizada', data: result });
     } catch (error) {
       next(error);

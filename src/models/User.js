@@ -2,32 +2,35 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  name: {
+  nome: {
     type: String,
     required: true,
     minlength: 3,
-    maxlength: 100
+    maxlength: 100,
+    alias: 'name'
   },
   email: {
     type: String,
     required: true,
     unique: true,
     lowercase: true,
-    trim: true
+    trim: true,
   },
-  password: {
+  senha: {
     type: String,
     required: true,
-    minlength: 6
+    minlength: 6,
+    alias: 'password'
   },
-  role: {
+  papel: {
     type: String,
     enum: ['user', 'organizer', 'admin'],
-    default: 'user'
+    default: 'user',
+    alias: 'role'
   },
   avatar: {
     type: String,
-    default: null
+    default: null,
   }
 }, {
   collection: 'usuarios',
@@ -38,10 +41,13 @@ const userSchema = new mongoose.Schema({
 
 // Hash da senha antes de salvar
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  // Verificar tanto o campo persistido ('senha') quanto o alias ('password')
+  if (!this.isModified('senha') && !this.isModified('password')) return next();
   try {
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    // Garantir que o hash seja salvo no campo persistido 'senha'
+    const plain = this.senha || this.password;
+    this.senha = await bcrypt.hash(plain, salt);
     next();
   } catch (err) {
     next(err);
@@ -49,13 +55,23 @@ userSchema.pre('save', async function(next) {
 });
 
 // Método para comparar senha
+// Método para comparar senha
 userSchema.methods.comparePassword = async function(password) {
-  return bcrypt.compare(password, this.password);
+  // Comparar com o campo persistido 'senha' ou com o alias 'password' caso exista
+  const hash = this.senha || this.password;
+  if (!hash) {
+    // Nenhum hash disponível: tratar como senha inválida em vez de lançar erro
+    return false;
+  }
+  return bcrypt.compare(password, hash);
 };
 
 // Remover senha do JSON retornado
 userSchema.methods.toJSON = function() {
   const obj = this.toObject();
+  // Remover campo de senha persistido
+  delete obj.senha;
+  // Também garantir remoção do alias caso apareça
   delete obj.password;
   return obj;
 };

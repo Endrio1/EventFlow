@@ -1,249 +1,122 @@
-# 🎉 EventFlow - Sistema de Gerenciamento de Eventos
+# 🎉 EventFlow — Migração para MongoDB
 
-EventFlow é uma plataforma completa para gerenciamento de eventos que permite organizadores criarem e gerenciarem eventos, enquanto usuários podem facilmente descobrir e se inscrever em eventos de seu interesse.
+Este repositório contém o EventFlow, um sistema de gerenciamento de eventos. O projeto foi migrado de um banco relacional (MySQL + Sequelize) para MongoDB usando Mongoose. Este README descreve as mudanças, como configurar a aplicação com MongoDB e notas importantes sobre a migração.
 
-![EventFlow](https://img.shields.io/badge/Status-Incompleto-red)
-![Node.js](https://img.shields.io/badge/Node.js-18+-green)
-![Express](https://img.shields.io/badge/Express-4.18-blue)
-![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)
+## O que mudou
 
-## ✨ Funcionalidades
+- Banco de dados: MySQL → MongoDB (via Mongoose).
+- Modelos agora são Schemas Mongoose em `src/models/*.js` (ex.: `User`, `Event`, `Enrollment`, `Feedback`).
+- Arquivo de conexão: `src/config/mongo.js` (lê `MONGODB_URI` do `.env`).
+- Relações entre entidades são tratadas por referências ObjectId (`ref`) em vez de chaves estrangeiras SQL.
+- Índices e unicidade configurados nos schemas (ex.: índice único em `Enrollment` para `user_id` + `event_id`).
+- Removido código/arquivos específicos do Sequelize (se presentes) e substituídos por operações Mongoose.
 
-### Para Usuários
-- 🔐 **Autenticação segura** com JWT
-- 🔍 **Busca e filtros** avançados de eventos
-- ✅ **Inscrição fácil** em eventos
-- 📋 **Acompanhamento** de inscrições
-- 📱 **Interface responsiva** mobile-first
+## Por que migramos para MongoDB
 
-### Para Organizadores
-- ➕ **Criar e editar** eventos facilmente
-- 🖼️ **Upload de imagens** dos eventos
-- 👥 **Gerenciar participantes** e lista de inscritos
-- 📊 **Painel administrativo** com estatísticas
-- 🎯 **Controle de capacidade** automático
+- Mais flexibilidade no esquema dos documentos (ideal para campos opcionais e iterações rápidas).
+- Menor complexidade para armazenar coleções com relacionamentos simples via referências.
+- Desenvolvimento mais ágil para o protótipo e para features que não exigem joins complexos.
 
-### Recursos Técnicos
-- 🛡️ **API RESTful** completa
-- 🔒 **Autenticação JWT** segura
-- 📸 **Upload de imagens** com Multer
-- 🗄️ **MySQL com Sequelize ORM**
-- 🎨 **Design moderno** com CSS customizado
-- ⚡ **Performance otimizada**
+## Estrutura de dados (resumo)
 
-## 🚀 Começando
+- `User` (`collection: usuarios`) — campos principais: name, email (unique), password (hash), role, avatar.
+- `Event` (`collection: eventos`) — title, description, category, image, location, date, time, capacity, current_enrollments, organizer_id (ObjectId ref `User`).
+- `Enrollment` (`collection: inscricoes`) — user_id (ref `User`), event_id (ref `Event`), status, enrollment_date. Índice único em { user_id, event_id }.
+- `Feedback` (`collection: avaliacoes`) — evento_id (ref `Event`), usuario_id (ref `User`), nota, comentario. Índice único em { evento_id, usuario_id }.
 
-### Pré-requisitos
+Os schemas estão em `src/models` e são exportados via `src/models/index.js`.
 
-- Node.js 18+ 
-- MySQL 8.0+
-- npm ou yarn
+## Configuração rápida
 
-### Instalação
+1. Instale as dependências
 
-1. **Clone o repositório**
-```bash
-git clone https://github.com/Endrio1/EventFlow.git
-cd EventFlow
-```
-
-2. **Instale as dependências**
 ```bash
 npm install
 ```
 
-3. **Configure o banco de dados**
+2. Variáveis de ambiente
 
-Crie um banco de dados MySQL:
-```sql
-CREATE DATABASE eventflow;
-```
+Crie um arquivo `.env` na raiz com (exemplo):
 
-4. **Configure as variáveis de ambiente**
-
-Copie o arquivo `.env.example` para `.env`:
-```bash
-cp .env.example .env
-```
-
-Edite o arquivo `.env` com suas configurações:
 ```env
+# URL de conexão para MongoDB
+MONGODB_URI=mongodb://localhost:27017/eventflow
+
+# JWT - obrigatório
+JWT_SECRET=seu_secret_aqui
+
 PORT=3000
 NODE_ENV=development
-
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=eventflow
-DB_USER=root
-DB_PASSWORD=sua_senha
-
-JWT_SECRET=seu_secret_super_secreto_aqui
-JWT_EXPIRES_IN=7d
-
-MAX_FILE_SIZE=5242880
-UPLOAD_PATH=./public/uploads/events
 ```
 
-5. **Inicie o servidor**
+3. Inicie o servidor
+
 ```bash
-# Desenvolvimento (com hot-reload)
+# Desenvolvimento (com nodemon)
 npm run dev
 
 # Produção
 npm start
 ```
 
-6. **Acesse a aplicação**
-- Frontend: http://localhost:3000
-- API: http://localhost:3000/api
+O servidor faz a conexão com o MongoDB chamando `src/config/mongo.js` antes de iniciar (veja `src/server.js`).
 
-## 📁 Estrutura do Projeto
+## Migração de dados (orientações)
 
-```
-EventFlow/
-├── src/
-│   ├── config/
-│   │   ├── database.js      # Configuração do Sequelize
-│   │   └── multer.js         # Configuração de upload
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── eventController.js
-│   │   └── enrollmentController.js
-│   ├── middlewares/
-│   │   ├── auth.js           # Autenticação JWT
-│   │   └── errorHandler.js  # Tratamento de erros
-│   ├── models/
-│   │   ├── User.js
-│   │   ├── Event.js
-│   │   ├── Enrollment.js
-│   │   └── index.js          # Associações
-│   ├── routes/
-│   │   ├── authRoutes.js
-│   │   ├── eventRoutes.js
-│   │   ├── enrollmentRoutes.js
-│   │   └── index.js
-│   └── server.js             # Servidor Express
-├── public/
-│   ├── css/
-│   │   ├── style.css
-│   │   └── dashboard.css
-│   ├── js/
-│   │   ├── api.js
-│   │   ├── auth.js
-│   │   ├── events.js
-│   │   ├── main.js
-│   │   └── dashboard.js
-│   ├── index.html
-│   └── dashboard.html
-├── .env.example
-├── .gitignore
-├── package.json
-├── LICENSE
-└── README.md
-```
+Se você precisa migrar dados de um banco MySQL existente para o MongoDB:
 
-## 🎨 Paleta de Cores
+1. Exporte os dados do MySQL (CSV/JSON) por tabela.
+2. Transforme os registros para o formato esperado pelos schemas Mongoose:
+	- Converta ids relacionais para ObjectId (ou gere novos ObjectId e atualize referências).
+	- Ajuste nomes de campos se necessário (ex.: `organizer_id` como ObjectId).
+3. Use `mongoimport` ou scripts Node.js com Mongoose para inserir os documentos nas coleções.
 
-- **Primária (Azul petróleo)**: `#1E40AF`
-- **Secundária (Cinza azulado)**: `#64748B`
-- **Fundo (Branco gelo)**: `#F1F5F9`
-- **Texto principal (Preto suave)**: `#0F172A`
-- **Destaques (Laranja suave)**: `#F97316`
-- **Sucesso (Verde suave)**: `#22C55E`
-- **Erro/Alerta (Vermelho coral)**: `#EF4444`
-
-## 🔑 Tipos de Usuário
-
-### User (Participante)
-- Visualizar eventos
-- Inscrever-se em eventos
-- Gerenciar suas inscrições
-
-### Organizer (Organizador)
-- Todas as funcionalidades de User
-- Criar e gerenciar eventos
-- Ver lista de participantes
-- Acessar painel administrativo
-
-### Admin (Administrador)
-- Todas as funcionalidades de Organizer
-- Gerenciar todos os eventos
-- Acesso completo ao sistema
-
-## 🛠️ Tecnologias Utilizadas
-
-### Backend
-- **Node.js** - Runtime JavaScript
-- **Express.js** - Framework web
-- **Sequelize** - ORM para MySQL
-- **MySQL** - Banco de dados relacional
-- **JWT** - Autenticação
-- **bcryptjs** - Hash de senhas
-- **Multer** - Upload de arquivos
-- **express-validator** - Validação de dados
-
-### Frontend
-- **HTML5** - Estrutura
-- **CSS3** - Estilização
-- **JavaScript (Vanilla)** - Interatividade
-- **Fetch API** - Comunicação com backend
-
-
-## 🔒 Segurança
-
-- ✅ Senhas criptografadas com bcrypt
-- ✅ Tokens JWT com expiração
-- ✅ Validação de dados de entrada
-- ✅ Proteção contra SQL Injection (Sequelize)
-- ✅ CORS configurado
-- ✅ Upload de arquivos validado
-
-## 🧪 Testes
+Exemplo com `mongoimport` (CSV → JSON convertido):
 
 ```bash
-# Executar testes (quando implementados)
-npm test
+# Exemplo: importar evento.json para a collection 'eventos'
+mongoimport --uri "$MONGODB_URI" --collection eventos --file evento.json --jsonArray
 ```
 
-## 📱 Responsividade
+Observação: para relacionamentos, normalmente é mais seguro usar um script Node.js que leia dados, crie documentos e mantenha as referências ObjectId corretamente.
 
-O EventFlow foi desenvolvido seguindo o conceito **mobile-first**, garantindo uma experiência perfeita em:
-- 📱 Smartphones
-- 💻 Tablets
-- 🖥️ Desktops
+## Observações técnicas importantes
 
-## 🤝 Contribuindo
+- Índices: os schemas já definem índices essenciais (p.ex. unicidade em inscrições/avaliacoes). Certifique-se de reconstruir índices ao importar dados.
+- Transações: se precisar de operações transacionais entre múltiplas coleções, utilize sessões do Mongoose com replica set (MongoDB precisa estar em replica set para suportar transações distribuídas).
+- Validação: a maior parte da validação de dados passou a ser realizada pelos Schemas do Mongoose. Continue validando entradas na camada de rota/controlador.
+- Segurança: mantenha o `JWT_SECRET` seguro e não commitá-lo no repositório.
 
-Contribuições são bem-vindas! Para contribuir:
+## Dependências principais (relacionadas ao DB)
 
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/NovaFuncionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/NovaFuncionalidade`)
-5. Abra um Pull Request
+- `mongoose` — client ODM para MongoDB
+- `dotenv` — carregamento de variáveis de ambiente
 
-## 📄 Licença
+Ver `package.json` para a lista completa de dependências.
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+## Como testar localmente
 
-## 👨‍💻 Autor
+1. Inicie um MongoDB local (ex.: `mongod --dbpath ./data` ou use Docker):
 
-Desenvolvido por Endrio
+```bash
+# Com Docker
+docker run --name eventflow-mongo -p 27017:27017 -d mongo:7
+```
 
-## 📞 Suporte
+2. Defina `MONGODB_URI` para apontar para o banco local (padrão: `mongodb://localhost:27017/eventflow`).
+3. Rode `npm run dev` e acesse a API e o frontend.
 
-Se você tiver alguma dúvida ou problema, por favor:
-- Abra uma [issue](https://github.com/Endrio1/EventFlow/issues)
-- Entre em contato: contato@eventflow.com
+## Compatibilidade e notas finais
 
-## 🎯 Roadmap Futuro
-
-- [ ] Sistema de notificações por email
-- [ ] Sistema de avaliações de eventos
-- [ ] Geração de certificados
-- [ ] Integração com pagamentos
+- Se você mantiver backups do banco SQL antigo, guarde-os até validar que todos os dados foram migrados corretamente.
+- Algumas consultas complexas baseadas em JOINs podem precisar ser reescritas usando agregações do MongoDB ou modelos denormalizados.
+- Os endpoints da API e a interface do front-end foram adaptados para funcionar com os schemas Mongoose; verifique controladores em `src/controllers` caso precise ajustar comportamento específico.
 
 ---
 
-⭐ Se este projeto foi útil para você, considere dar uma estrela no GitHub!
-EventFlow é um sistema de gerenciamento de eventos desenvolvido para o controle eficiente de informações.
+Se quiser que eu inclua um exemplo de script Node.js para migrar dados (ex.: migrar usuários e manter referências), posso criar um script de exemplo e instruções passo a passo.
+
+---
+
+© Endrio — EventFlow
+
