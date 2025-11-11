@@ -213,7 +213,9 @@
           <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0;">
             <h4 style="margin: 0 0 0.75rem 0; color: #1e293b; font-size: 1rem;">Ações Administrativas</h4>
             <button 
-              onclick="sendPasswordResetEmail('${user.id}', '${escapeAttr(user.email)}')" 
+              class="btn-send-reset-password"
+              data-user-id="${user.id}"
+              data-user-email="${escapeAttr(user.email)}" 
               style="
                 width: 100%;
                 padding: 12px;
@@ -323,60 +325,7 @@
     }
   }
 
-  // Ver detalhes do usuário
-  async function viewUserDetails(userId){
-    const modal = document.getElementById('enrollmentsModal');
-    document.getElementById('modalEventTitle').textContent = '';
-    const list = document.getElementById('enrollmentsList');
-    list.innerHTML = '<p class="muted">Carregando informações do usuário...</p>';
-    modal.style.display = 'flex';
-
-    try {
-      // Buscar detalhes do usuário via API admin
-      const response = await fetchJSON(`${apiRoot}/admin/users?search=${userId}`);
-      const users = response.data || response || [];
-      const user = users.find(u => u.id == userId);
-
-      if (!user) {
-        list.innerHTML = '<p class="muted">❌ Usuário não encontrado.</p>';
-        return;
-      }
-
-      const roleBadge = user.role === 'admin' ? 'badge-admin' : user.role === 'organizer' ? 'badge-organizer' : 'badge-user';
-      const roleLabel = user.role === 'admin' ? 'Administrador' : user.role === 'organizer' ? 'Organizador' : 'Participante';
-      
-      list.innerHTML = `
-        <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px;">
-          <h4 style="margin: 0 0 1rem 0; color: #0F172A;">👤 Detalhes do Usuário</h4>
-          <div style="display: grid; gap: 0.75rem;">
-            <div>
-              <strong style="color: #64748B; font-size: 0.875rem;">ID:</strong><br>
-              <span style="color: #0F172A;">${user.id}</span>
-            </div>
-            <div>
-              <strong style="color: #64748B; font-size: 0.875rem;">Nome:</strong><br>
-              <span style="color: #0F172A;">${escapeHtml(user.name || user.fullName || '—')}</span>
-            </div>
-            <div>
-              <strong style="color: #64748B; font-size: 0.875rem;">Email:</strong><br>
-              <span style="color: #0F172A;">${escapeHtml(user.email || '—')}</span>
-            </div>
-            <div>
-              <strong style="color: #64748B; font-size: 0.875rem;">Tipo de Conta:</strong><br>
-              <span class="badge ${roleBadge}">${roleLabel}</span>
-            </div>
-            <div>
-              <strong style="color: #64748B; font-size: 0.875rem;">Cadastrado em:</strong><br>
-              <span style="color: #0F172A;">${user.createdAt ? new Date(user.createdAt).toLocaleString('pt-BR') : '—'}</span>
-            </div>
-          </div>
-        </div>
-      `;
-    } catch (err) {
-      console.error('Erro ao carregar detalhes do usuário:', err);
-      list.innerHTML = `<div class="muted">❌ Erro ao carregar detalhes: ${escapeHtml(err.message)}</div>`;
-    }
-  }
+  // (duplicate viewUserDetails removed — using the primary implementation above that includes admin actions)
 
   // debounce
   function debounce(fn, wait=300){ let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), wait); }; }
@@ -392,6 +341,29 @@
     document.getElementById('usersTable').addEventListener('click', tableClickHandler);
     document.getElementById('eventsTable').addEventListener('click', tableClickHandler);
     document.getElementById('closeModal').addEventListener('click', closeModal);
+
+    // Fechar modal ao clicar fora da modal-card
+    const enrollmentsModal = document.getElementById('enrollmentsModal');
+    if (enrollmentsModal) {
+      enrollmentsModal.addEventListener('click', (e) => {
+        // Se o alvo do clique for o overlay (o próprio modal), fecha
+        if (e.target === enrollmentsModal) closeModal();
+      });
+    }
+
+    // Event delegation para botão de redefinição de senha dentro do modal
+    document.getElementById('enrollmentsList').addEventListener('click', async (e) => {
+      if (e.target.classList.contains('btn-send-reset-password')) {
+        const userId = e.target.dataset.userId;
+        const userEmail = e.target.dataset.userEmail;
+        await sendPasswordResetEmail(userId, userEmail);
+      }
+    });
+
+    // Fechar modal com tecla Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
 
     // quick search on typing
     document.getElementById('userSearch').addEventListener('input', debounce((e)=> loadUsers(e.target.value), 300));
