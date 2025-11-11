@@ -11,7 +11,7 @@ class EventController {
         category, 
         search, 
         name,
-        status = 'active', 
+        status, 
         page = 1, 
         limit = 10,
         sortBy = 'date',
@@ -22,7 +22,8 @@ class EventController {
       const where = {};
 
       // Filtros (case-insensitive quando possível)
-      if (status) where.status = status;
+      // Só filtrar por status se for explicitamente fornecido
+      if (status !== undefined && status !== '') where.status = status;
       if (category) {
         // Usar comparação case-insensitive para categorias (Postgres iLike)
         where.category = { [Op.iLike]: category };

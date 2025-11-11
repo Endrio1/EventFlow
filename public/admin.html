@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Painel Admin - EventFlow</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Estilos específicos para admin */
+    body {
+      background: #f0f4f8;
+      min-height: 100vh;
+    }
+    
+    .admin-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      padding: 1.5rem 0;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+      margin-bottom: 2rem;
+    }
+    
+    .admin-header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .admin-header h1 {
+      color: white;
+      font-size: 1.8rem;
+      margin: 0;
+      font-weight: 600;
+    }
+    
+    .admin-header .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: white;
+    }
+    
+    .admin-header .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      border: 2px solid rgba(255,255,255,0.4);
+    }
+    
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+      gap: 2rem;
+    }
+    
+    .admin-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      transition: box-shadow 0.3s ease;
+    }
+    
+    .admin-section:hover {
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    }
+    
+    .admin-section h3 {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.5rem;
+      color: #0F172A;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .admin-section h3::before {
+      content: '';
+      width: 4px;
+      height: 28px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 2px;
+    }
+    
+    .filters-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .filters-row .input-field {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 2px solid #e6e9ef;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+    
+    .filters-row .input-field:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .filters-row .btn {
+      padding: 0.75rem 1.5rem;
+      white-space: nowrap;
+    }
+    
+    .table-wrap {
+      overflow-x: auto;
+      margin: 0 -2rem;
+      padding: 0 2rem;
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    
+    .table thead {
+      background: #f8fafc;
+    }
+    
+    .table th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    
+    .table td {
+      padding: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+    
+    .table tbody tr {
+      transition: background-color 0.15s ease;
+    }
+    
+    .table tbody tr:hover {
+      background-color: #f8fafc;
+    }
+    
+    .table td:last-child {
+      white-space: nowrap;
+    }
+    
+    .small-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      border-radius: 8px;
+      margin-right: 0.5rem;
+      transition: all 0.2s ease;
+    }
+    
+    .small-btn:last-child {
+      margin-right: 0;
+    }
+    
+    .btn-view {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-view:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+    
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-danger:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .badge-admin {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .badge-organizer {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .badge-user {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .muted {
+      color: #64748B;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      z-index: 2000;
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 85vh;
+      overflow: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal-card h3 {
+      margin: 0 0 1.5rem 0;
+      color: #0F172A;
+      font-size: 1.5rem;
+    }
+    
+    .modal-card ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .modal-card li {
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+    }
+    
+    .modal-card li strong {
+      color: #0F172A;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    
+    .modal-actions {
+      margin-top: 1.5rem;
+      text-align: right;
+    }
+    
+    @media (max-width: 768px) {
+      .admin-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .admin-header h1 {
+        font-size: 1.4rem;
+      }
+      
+      .filters-row {
+        flex-direction: column;
+      }
+      
+      .table-wrap {
+        margin: 0 -1rem;
+        padding: 0 1rem;
+      }
+      
+      .admin-section {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="admin-header">
+    <div class="container">
+      <h1>🔧 Painel de Administração</h1>
+      <div class="user-info">
+        <span id="adminUserName">Admin</span>
+        <div class="user-avatar" id="adminAvatar">A</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <section class="admin-section">
+      <h3>👥 Gerenciar Usuários</h3>
+      <div class="filters-row">
+        <input id="userSearch" class="input-field" placeholder="🔍 Pesquisar por nome ou email...">
+        <button id="btnSearchUsers" class="btn btn-primary">Buscar</button>
+      </div>
+      <div class="table-wrap">
+        <table id="usersTable" class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Tipo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section">
+      <h3>📅 Gerenciar Eventos</h3>
+      <div class="filters-row">
+        <input id="eventSearch" class="input-field" placeholder="🔍 Pesquisar por título ou local...">
+        <button id="btnSearchEvents" class="btn btn-primary">Buscar</button>
+      </div>
+      <div class="table-wrap">
+        <table id="eventsTable" class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Local</th>
+              <th>Vagas</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal de inscrições -->
+  <div id="enrollmentsModal" class="modal" style="display:none">
+    <div class="modal-card">
+      <h3 id="modalTitle">📋 Detalhes</h3>
+      <span id="modalEventTitle" class="muted" style="display: block; margin-bottom: 1rem;"></span>
+      <div id="enrollmentsList"></div>
+      <div class="modal-actions">
+        <button id="closeModal" class="btn btn-primary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

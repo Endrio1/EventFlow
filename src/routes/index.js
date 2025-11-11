@@ -5,6 +5,7 @@ const authRoutes = require('./authRoutes');
 const eventRoutes = require('./eventRoutes');
 const enrollmentRoutes = require('./enrollmentRoutes');
 const feedbackRoutes = require('./feedbackRoutes');
+const adminRoutes = require('./adminRoutes');
 
 // Health check
 router.get('/', (req, res) => {
@@ -16,7 +17,8 @@ router.get('/', (req, res) => {
       auth: '/api/auth',
       events: '/api/events',
       enrollments: '/api/enrollments',
-      feedbacks: '/api/feedbacks'
+      feedbacks: '/api/feedbacks',
+      admin: '/api/admin'
     }
   });
 });
@@ -26,5 +28,6 @@ router.use('/auth', authRoutes);
 router.use('/events', eventRoutes);
 router.use('/enrollments', enrollmentRoutes);
 router.use('/feedbacks', feedbackRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;

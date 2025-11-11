@@ -54,6 +54,13 @@ class AuthManager {
       e.preventDefault();
       this.showMyEnrollments();
     });
+
+    // Admin link
+    document.getElementById('adminLink')?.addEventListener('click', (e) => {
+      // se o link estiver presente, leva para /admin.html
+      e.preventDefault();
+      window.location.href = '/admin.html';
+    });
   }
 
   updateUI() {
@@ -104,6 +111,18 @@ class AuthManager {
         const dashCreateBtn = document.getElementById('btnCreateEvent');
         if (dashCreateBtn) dashCreateBtn.style.display = 'none';
       }
+
+      // Mostrar link do painel admin apenas para admins
+      const adminLink = document.getElementById('adminLink');
+      if (adminLink) {
+        if (user.role === 'admin') {
+          adminLink.classList.remove('hidden');
+          adminLink.style.display = 'block';
+        } else {
+          adminLink.classList.add('hidden');
+          adminLink.style.display = 'none';
+        }
+      }
     } else {
       // Restaurar visibilidade dos botões de autenticação quando deslogado
       if (authButtons) {
@@ -114,6 +133,8 @@ class AuthManager {
         userMenu.classList.add('hidden');
         userMenu.style.display = 'none';
       }
+      const adminLink = document.getElementById('adminLink');
+      if (adminLink) { adminLink.classList.add('hidden'); adminLink.style.display = 'none'; }
       if (createEventBtn) {
         createEventBtn.style.display = 'none';
       }
@@ -132,6 +153,9 @@ class AuthManager {
         <div class="form-group">
           <label for="loginPassword">Senha</label>
           <input type="password" id="loginPassword" class="input-field" required>
+        </div>
+        <div style="text-align: right; margin-bottom: 1rem;">
+          <a href="/forgot-password.html" style="color: var(--primary-color); font-size: 0.875rem; text-decoration: none;">Esqueceu sua senha?</a>
         </div>
         <div id="loginError"></div>
         <div class="form-actions">

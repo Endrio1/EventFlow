@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   senha VARCHAR(255) NOT NULL,
   papel VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (papel IN ('user','organizer','admin')),
   avatar VARCHAR(255),
+  reset_password_token VARCHAR(255),
+  reset_password_expires TIMESTAMP WITH TIME ZONE,
   criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   atualizado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
@@ -116,6 +118,10 @@ CREATE INDEX IF NOT EXISTS idx_avaliacoes_evento_id ON avaliacoes(evento_id);
 -- =========================
 -- If you want to ensure the events table has the vendas_fechadas column (for older DBs):
 ALTER TABLE eventos ADD COLUMN IF NOT EXISTS vendas_fechadas BOOLEAN NOT NULL DEFAULT false;
+
+-- Add password reset columns to usuarios table if they don't exist:
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255);
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP WITH TIME ZONE;
 
 -- Final commit
 COMMIT;
