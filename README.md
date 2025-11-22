@@ -376,7 +376,7 @@ Desenvolvido por Endrio
 
 Se você tiver alguma dúvida ou problema, por favor:
 - Abra uma [issue](https://github.com/Endrio1/EventFlow/issues)
-- Entre em contato: contato@eventflow.com
+- Entre em contato: eventflow.company@gmail.com
 
 ## 🚀 Roadmap
 
