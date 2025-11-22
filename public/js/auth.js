@@ -202,6 +202,14 @@ class AuthManager {
             <option value="organizer">Organizador</option>
           </select>
         </div>
+        <div class="form-group" id="registerPhoneGroup" style="display:none;">
+          <label for="registerPhone">Contato (Telefone)</label>
+          <input type="tel" id="registerPhone" class="input-field" placeholder="(99) 99999-9999">
+        </div>
+        <div class="form-group" id="registerCpfCnpjGroup" style="display:none;">
+          <label for="registerCpfCnpj">CPF / CNPJ</label>
+          <input type="text" id="registerCpfCnpj" class="input-field" placeholder="Somente números">
+        </div>
         <div id="registerError"></div>
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -217,6 +225,135 @@ class AuthManager {
       e.preventDefault();
       await this.handleRegister();
     });
+
+    // Mostrar/ocultar campos de contato e CPF/CNPJ conforme o tipo de conta
+    const roleSelect = document.getElementById('registerRole');
+    const phoneGroup = document.getElementById('registerPhoneGroup');
+    const cpfGroup = document.getElementById('registerCpfCnpjGroup');
+    const phoneInput = document.getElementById('registerPhone');
+    const cpfInput = document.getElementById('registerCpfCnpj');
+
+    function toggleRegisterExtras(){
+      const role = roleSelect.value;
+      // Mostrar os campos para ambos os tipos — participantes devem informar CPF (não CNPJ)
+      phoneGroup.style.display = '';
+      cpfGroup.style.display = '';
+      phoneInput.required = true;
+      cpfInput.required = true;
+
+      // Ajustar label para deixar claro o que o usuário deve inserir
+      const cpfLabel = document.querySelector('label[for="registerCpfCnpj"]');
+      if (cpfLabel) {
+        if (role === 'organizer') cpfLabel.textContent = 'CPF / CNPJ';
+        else cpfLabel.textContent = 'CPF (participante)';
+      }
+    }
+
+    roleSelect.addEventListener('change', toggleRegisterExtras);
+    // initialize visibility
+    toggleRegisterExtras();
+
+    // --- Máscara e comportamento do campo CPF / CNPJ ---
+    const onlyDigits = v => (v || '').toString().replace(/\D/g, '');
+
+    const formatCPF = (d) => {
+      d = d.slice(0, 11);
+      if (d.length <= 3) return d;
+      if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
+      if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+      return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+    };
+
+    const formatCNPJ = (d) => {
+      d = d.slice(0, 14);
+      if (d.length <= 2) return d;
+      if (d.length <= 5) return `${d.slice(0,2)}.${d.slice(2)}`;
+      if (d.length <= 8) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`;
+      if (d.length <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
+      return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
+    };
+
+    function applyCpfCnpjMask() {
+      if (!cpfInput) return;
+      const role = roleSelect.value;
+      const digits = onlyDigits(cpfInput.value);
+
+      if (role === 'user') {
+        // For participants, force CPF behavior (max 11 digits)
+        cpfInput.value = formatCPF(digits);
+        cpfInput.dataset.maxDigits = '11';
+        cpfInput.setAttribute('inputmode', 'numeric');
+      } else {
+        // Organizers: accept CPF (<=11) or CNPJ (>11)
+        if (digits.length <= 11) {
+          cpfInput.value = formatCPF(digits);
+        } else {
+          cpfInput.value = formatCNPJ(digits);
+        }
+        cpfInput.dataset.maxDigits = '14';
+        cpfInput.setAttribute('inputmode', 'numeric');
+      }
+    }
+
+    function onCpfCnpjPaste(e) {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = onlyDigits(paste);
+      const role = roleSelect.value;
+      const max = role === 'user' ? 11 : 14;
+      const truncated = digits.slice(0, max);
+      if (truncated.length <= 11) cpfInput.value = formatCPF(truncated);
+      else cpfInput.value = formatCNPJ(truncated);
+    }
+
+    // Escuta input e paste
+    if (cpfInput) {
+      cpfInput.addEventListener('input', applyCpfCnpjMask);
+      cpfInput.addEventListener('paste', onCpfCnpjPaste);
+      // aplicar máscara inicial (caso o campo tenha valor pré-carregado)
+      applyCpfCnpjMask();
+    }
+
+    // Quando o papel mudar, reaplicar máscara (por exemplo: organizer -> user)
+    roleSelect.addEventListener('change', () => {
+      // Forçar revalidação/mascara do campo
+      applyCpfCnpjMask();
+      // Atualiza o label e placeholder já existente
+      const cpfLabel = document.querySelector('label[for="registerCpfCnpj"]');
+      if (cpfLabel) {
+        if (roleSelect.value === 'organizer') cpfLabel.textContent = 'CPF / CNPJ';
+        else cpfLabel.textContent = 'CPF (participante)';
+      }
+    });
+
+    // --- Máscara de telefone ---
+    const formatPhone = (d) => {
+      d = d.replace(/\D/g, '').slice(0, 11); // aceitar até 11 (inclui 9 dígitos mobile)
+      if (d.length <= 2) return `(${d}`;
+      if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`;
+      if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+      return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+    };
+
+    function applyPhoneMask() {
+      if (!phoneInput) return;
+      const digits = (phoneInput.value || '').replace(/\D/g, '').slice(0,11);
+      phoneInput.value = formatPhone(digits);
+      phoneInput.setAttribute('inputmode', 'tel');
+    }
+
+    function onPhonePaste(e) {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text') || '';
+      const digits = paste.replace(/\D/g, '').slice(0,11);
+      phoneInput.value = formatPhone(digits);
+    }
+
+    if (phoneInput) {
+      phoneInput.addEventListener('input', applyPhoneMask);
+      phoneInput.addEventListener('paste', onPhonePaste);
+      applyPhoneMask();
+    }
 
     document.getElementById('switchToLogin').addEventListener('click', (e) => {
       e.preventDefault();
@@ -249,10 +386,75 @@ class AuthManager {
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
     const role = document.getElementById('registerRole').value;
+    const phoneEl = document.getElementById('registerPhone');
+    const cpfEl = document.getElementById('registerCpfCnpj');
+    const phone = phoneEl ? phoneEl.value : '';
+    const cpf_cnpj = cpfEl ? cpfEl.value : '';
     const errorDiv = document.getElementById('registerError');
 
     try {
-      const response = await api.register({ name, email, password, role });
+      // Basic normalization: remove non-digits for phone and cpf/cnpj
+      const normalizeDigits = v => (v || '').replace(/\D/g,'');
+      const payload = { name, email, password, role };
+      if(phone) payload.telefone = normalizeDigits(phone);
+      if(cpf_cnpj) payload.cpf_cnpj = normalizeDigits(cpf_cnpj);
+
+      // Both roles must provide phone and cpf; participants must provide valid CPF (not CNPJ)
+      if(!payload.telefone || !payload.cpf_cnpj){
+        throw new Error('Informe telefone e CPF (participante) / CPF ou CNPJ (organizador).');
+      }
+
+      // Validation helpers
+      const isValidCPF = (cpf) => {
+        cpf = (cpf || '').replace(/\D/g,'');
+        if (!cpf || cpf.length !== 11) return false;
+        if (/^(\d)\1+$/.test(cpf)) return false;
+        let sum = 0;
+        for (let i = 0; i < 9; i++) sum += parseInt(cpf.charAt(i)) * (10 - i);
+        let rev = 11 - (sum % 11);
+        if (rev === 10 || rev === 11) rev = 0;
+        if (rev !== parseInt(cpf.charAt(9))) return false;
+        sum = 0;
+        for (let i = 0; i < 10; i++) sum += parseInt(cpf.charAt(i)) * (11 - i);
+        rev = 11 - (sum % 11);
+        if (rev === 10 || rev === 11) rev = 0;
+        return rev === parseInt(cpf.charAt(10));
+      };
+
+      const isValidCNPJ = (cnpj) => {
+        cnpj = (cnpj || '').replace(/\D/g,'');
+        if (!cnpj || cnpj.length !== 14) return false;
+        if (/^(\d)\1+$/.test(cnpj)) return false;
+        const t = cnpj.length - 2;
+        const digits = cnpj.substring(t);
+        const numbers = cnpj.substring(0, t);
+        let sum = 0;
+        let pos = t - 7;
+        for (let i = t; i >= 1; i--) {
+          sum += numbers.charAt(t - i) * pos--;
+          if (pos < 2) pos = 9;
+        }
+        let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+        if (result != digits.charAt(0)) return false;
+        sum = 0;
+        pos = t - 7;
+        const numbers2 = cnpj.substring(0, t) + digits.charAt(0);
+        for (let i = t + 1; i >= 1; i--) {
+          sum += numbers2.charAt(t + 1 - i) * pos--;
+          if (pos < 2) pos = 9;
+        }
+        result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+        return result == digits.charAt(1);
+      };
+
+      // Role-specific validation
+      if(role === 'user'){
+        if(!isValidCPF(payload.cpf_cnpj)) throw new Error('CPF inválido. Por favor informe um CPF válido (11 dígitos).');
+      } else if(role === 'organizer'){
+        if(!(isValidCPF(payload.cpf_cnpj) || isValidCNPJ(payload.cpf_cnpj))) throw new Error('CPF ou CNPJ inválido. Informe um documento válido.');
+      }
+
+      const response = await api.register(payload);
       errorDiv.innerHTML = '<div class="alert alert-success">Cadastro realizado com sucesso!</div>';
       
       setTimeout(() => {

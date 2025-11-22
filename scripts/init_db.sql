@@ -1,16 +1,20 @@
 -- Complete migration for EventFlow (Postgres)
--- This file consolidates the database DDL changes made during development.
--- Run with: psql -d <db> -f scripts/complete_migration.sql
+-- This consolidated init script includes schema creation and the
+-- additional normalization triggers/indexes for CPF/CNPJ, phones and addresses.
+-- Safe to run multiple times (uses IF NOT EXISTS and idempotent constructs).
 
--- IMPORTANT NOTES:
--- 1) If your database already contains data (especially in "avaliacoes"),
---    make sure to check and remove duplicates on (evento_id, usuario_id)
---    BEFORE applying the unique index/constraint. See the section "Remove duplicates".
--- 2) This script uses "CREATE ... IF NOT EXISTS" where applicable so it is safe
---    to run multiple times (idempotent in most parts).
--- 3) Review and adapt timestamps/column names to match your current schema if needed.
+-- Run with:
+-- psql -d <db> -f scripts/init_db.sql
+
+-- Notes:
+-- - Review 'Remove duplicates' section before applying unique partial indexes if your
+--   data may have duplicates (e.g., telefone_normalized, cpf_cnpj_normalized, avaliacoes).
+-- - If you use pgAdmin, this script avoids nested DO $$ blocks and uses plain DDL/PLPGSQL.
 
 BEGIN;
+
+-- Ensure extension for digest exists
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- =========================
 -- 1) USERS (usuarios)
@@ -22,11 +26,62 @@ CREATE TABLE IF NOT EXISTS usuarios (
   senha VARCHAR(255) NOT NULL,
   papel VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (papel IN ('user','organizer','admin')),
   avatar VARCHAR(255),
+  telefone VARCHAR(30),
+  telefone_normalized VARCHAR(30),
+  cpf_cnpj VARCHAR(30),
+  cpf_cnpj_normalized VARCHAR(30),
   reset_password_token VARCHAR(255),
   reset_password_expires TIMESTAMP WITH TIME ZONE,
+  endereco_id INTEGER,
   criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   atualizado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
+
+-- Populate normalized columns if missing (for existing DBs)
+UPDATE usuarios
+SET telefone_normalized = regexp_replace(coalesce(telefone,''), '\\D', '', 'g')
+WHERE telefone IS NOT NULL AND (telefone_normalized IS NULL OR telefone_normalized = '');
+
+UPDATE usuarios
+SET cpf_cnpj_normalized = regexp_replace(coalesce(cpf_cnpj,''), '\\D', '', 'g')
+WHERE cpf_cnpj IS NOT NULL AND (cpf_cnpj_normalized IS NULL OR cpf_cnpj_normalized = '');
+
+-- Partial unique indexes to avoid duplicates when value present
+CREATE UNIQUE INDEX IF NOT EXISTS uq_usuarios_telefone_normalized
+  ON usuarios (telefone_normalized)
+  WHERE telefone_normalized IS NOT NULL AND telefone_normalized <> '';
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_usuarios_cpf_cnpj_normalized
+  ON usuarios (cpf_cnpj_normalized)
+  WHERE cpf_cnpj_normalized IS NOT NULL AND cpf_cnpj_normalized <> '';
+
+-- Trigger function to normalize telefone
+CREATE OR REPLACE FUNCTION usuarios_normalize_telefone()
+RETURNS trigger AS $$
+BEGIN
+  NEW.telefone_normalized := regexp_replace(coalesce(NEW.telefone,''), '\\D', '', 'g');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_usuarios_normalize_telefone ON usuarios;
+CREATE TRIGGER trg_usuarios_normalize_telefone
+  BEFORE INSERT OR UPDATE ON usuarios
+  FOR EACH ROW EXECUTE FUNCTION usuarios_normalize_telefone();
+
+-- Trigger function to normalize cpf/cnpj
+CREATE OR REPLACE FUNCTION usuarios_normalize_cpfcnpj()
+RETURNS trigger AS $$
+BEGIN
+  NEW.cpf_cnpj_normalized := regexp_replace(coalesce(NEW.cpf_cnpj,''), '\\D', '', 'g');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_usuarios_normalize_cpfcnpj ON usuarios;
+CREATE TRIGGER trg_usuarios_normalize_cpfcnpj
+  BEFORE INSERT OR UPDATE ON usuarios
+  FOR EACH ROW EXECUTE FUNCTION usuarios_normalize_cpfcnpj();
 
 -- =========================
 -- 2) EVENTS (eventos)
@@ -43,13 +98,18 @@ CREATE TABLE IF NOT EXISTS eventos (
   capacidade INTEGER NOT NULL,
   inscricoes_atuais INTEGER NOT NULL DEFAULT 0,
   status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active','cancelled','completed')),
-  organizador_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  organizer_id INTEGER,
+  organizador_id INTEGER, -- legacy field name
   vendas_fechadas BOOLEAN NOT NULL DEFAULT false,
+  ativo BOOLEAN NOT NULL DEFAULT true,
   criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   atualizado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
--- Indexes for events
+-- Keep both possible organizer fk columns if app uses either name; create FK only if column exists
+ALTER TABLE eventos
+  ADD CONSTRAINT IF NOT EXISTS fk_eventos_organizador_id FOREIGN KEY (organizador_id) REFERENCES usuarios(id) ON DELETE CASCADE;
+
 CREATE INDEX IF NOT EXISTS idx_eventos_data ON eventos(data);
 CREATE INDEX IF NOT EXISTS idx_eventos_categoria ON eventos(categoria);
 
@@ -58,12 +118,15 @@ CREATE INDEX IF NOT EXISTS idx_eventos_categoria ON eventos(categoria);
 -- =========================
 CREATE TABLE IF NOT EXISTS inscricoes (
   id SERIAL PRIMARY KEY,
-  usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-  evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+  usuario_id INTEGER NOT NULL,
+  evento_id INTEGER NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed','cancelled','attended')),
   criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   UNIQUE(usuario_id, evento_id)
 );
+
+ALTER TABLE inscricoes ADD CONSTRAINT IF NOT EXISTS fk_inscricoes_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE;
+ALTER TABLE inscricoes ADD CONSTRAINT IF NOT EXISTS fk_inscricoes_evento FOREIGN KEY (evento_id) REFERENCES eventos(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_inscricoes_usuario ON inscricoes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_inscricoes_evento ON inscricoes(evento_id);
@@ -71,59 +134,89 @@ CREATE INDEX IF NOT EXISTS idx_inscricoes_evento ON inscricoes(evento_id);
 -- =========================
 -- 4) FEEDBACKS (avaliacoes)
 -- =========================
--- Create table if not exists (includes UNIQUE(evento_id, usuario_id))
 CREATE TABLE IF NOT EXISTS avaliacoes (
   id SERIAL PRIMARY KEY,
-  evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
-  usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  evento_id INTEGER NOT NULL,
+  usuario_id INTEGER NOT NULL,
   nota INTEGER NOT NULL CHECK (nota >= 1 AND nota <= 5),
   comentario TEXT,
   criado_em TIMESTAMP WITH TIME ZONE DEFAULT now(),
   UNIQUE(evento_id, usuario_id)
 );
 
+ALTER TABLE avaliacoes ADD CONSTRAINT IF NOT EXISTS fk_avaliacoes_evento FOREIGN KEY (evento_id) REFERENCES eventos(id) ON DELETE CASCADE;
+ALTER TABLE avaliacoes ADD CONSTRAINT IF NOT EXISTS fk_avaliacoes_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE;
+
 CREATE INDEX IF NOT EXISTS idx_avaliacoes_evento_id ON avaliacoes(evento_id);
 
 -- =========================
--- 5) Optional: If you already created avaliacoes earlier without the UNIQUE constraint,
---    and you received an error about duplicates, use the block below to remove duplicates
---    while keeping the most recent row per (evento_id, usuario_id). This block is
---    commented out by default. Uncomment and run if you need to de-duplicate.
---
--- NOTE: This will create a backup table `avaliacoes_backup` before deleting rows.
---
--- BEGIN;
---
--- -- backup
--- CREATE TABLE IF NOT EXISTS avaliacoes_backup AS TABLE avaliacoes;
---
--- -- delete duplicates, keep most recent (by criado_em, then id)
--- WITH ranked AS (
---   SELECT id,
---     ROW_NUMBER() OVER (PARTITION BY evento_id, usuario_id ORDER BY criado_em DESC, id DESC) AS rn
---   FROM avaliacoes
--- )
--- DELETE FROM avaliacoes
--- WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
---
--- COMMIT;
+-- 5) ADDRESSES (enderecos) - normalized table to avoid duplicates
+-- =========================
+CREATE TABLE IF NOT EXISTS enderecos (
+  id SERIAL PRIMARY KEY,
+  cep VARCHAR(20),
+  rua VARCHAR(255),
+  numero VARCHAR(50),
+  complemento VARCHAR(255),
+  bairro VARCHAR(255),
+  cidade VARCHAR(100),
+  estado VARCHAR(100),
+  pais VARCHAR(100) DEFAULT 'BR',
+  latitude NUMERIC(9,6),
+  longitude NUMERIC(9,6),
+  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  normalized_text TEXT,
+  normalized_hash VARCHAR(64)
+);
 
--- If you performed the deduplication step above, apply the unique index now.
--- If the table was created above with the UNIQUE constraint, this step will be a no-op.
---
--- CREATE UNIQUE INDEX IF NOT EXISTS unique_avaliacoes_evento_usuario ON avaliacoes(evento_id, usuario_id);
+-- Populate normalized fields if missing (safe to run repeatedly)
+UPDATE enderecos SET
+  normalized_text = lower(regexp_replace(coalesce(cep,'') || ' ' || coalesce(rua,'') || ' ' || coalesce(numero,'') || ' ' || coalesce(complemento,'') || ' ' || coalesce(bairro,'') || ' ' || coalesce(cidade,'') || ' ' || coalesce(estado,'') || ' ' || coalesce(pais,''), '[^a-z0-9]+','','gi')),
+  normalized_hash = encode(digest(coalesce(lower(regexp_replace(coalesce(cep,'') || ' ' || coalesce(rua,'') || ' ' || coalesce(numero,'') || ' ' || coalesce(complemento,'') || ' ' || coalesce(bairro,'') || ' ' || coalesce(cidade,'') || ' ' || coalesce(estado,'') || ' ' || coalesce(pais,'')),''), 'sha256'), 'hex')
+WHERE normalized_hash IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_enderecos_normalized_hash ON enderecos(normalized_hash);
+
+-- Trigger function to update normalized text/hash
+CREATE OR REPLACE FUNCTION enderecos_normalize_trigger()
+RETURNS trigger AS $$
+BEGIN
+  NEW.normalized_text := lower(regexp_replace(coalesce(NEW.cep,'') || ' ' || coalesce(NEW.rua,'') || ' ' || coalesce(NEW.numero,'') || ' ' || coalesce(NEW.complemento,'') || ' ' || coalesce(NEW.bairro,'') || ' ' || coalesce(NEW.cidade,'') || ' ' || coalesce(NEW.estado,'') || ' ' || coalesce(NEW.pais,''), '[^a-z0-9]+','','gi'));
+  NEW.normalized_hash := encode(digest(coalesce(NEW.normalized_text,''), 'sha256'), 'hex');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_enderecos_normalize ON enderecos;
+CREATE TRIGGER trg_enderecos_normalize
+  BEFORE INSERT OR UPDATE ON enderecos
+  FOR EACH ROW EXECUTE FUNCTION enderecos_normalize_trigger();
+
+-- Add endereco_id foreign key to usuarios if table exists
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS endereco_id INTEGER;
+ALTER TABLE usuarios ADD CONSTRAINT IF NOT EXISTS fk_usuarios_endereco FOREIGN KEY (endereco_id) REFERENCES enderecos(id) ON DELETE SET NULL;
 
 -- =========================
--- 6) Extras / compatibility
+-- 6) Extras / compatibility and final adjustments
 -- =========================
--- If you want to ensure the events table has the vendas_fechadas column (for older DBs):
+-- Ensure vendas_fechadas and ativo columns exist on eventos (backwards-compat)
 ALTER TABLE eventos ADD COLUMN IF NOT EXISTS vendas_fechadas BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE eventos ADD COLUMN IF NOT EXISTS ativo BOOLEAN NOT NULL DEFAULT true;
 
--- Add password reset columns to usuarios table if they don't exist:
+-- Ensure reset password columns exist (already included in usuarios CREATE but keep idempotent alter)
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255);
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP WITH TIME ZONE;
 
--- Final commit
+-- Make sure organizer FK exists on eventos for legacy column organizador_id (if present)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='eventos' AND column_name='organizador_id') THEN
+    BEGIN
+      ALTER TABLE eventos ADD CONSTRAINT IF NOT EXISTS fk_eventos_organizador_id FOREIGN KEY (organizador_id) REFERENCES usuarios(id) ON DELETE CASCADE;
+    EXCEPTION WHEN duplicate_object THEN NULL; END;
+  END IF;
+END$$;
+
 COMMIT;
 
--- End of migration
+-- End of consolidated migration

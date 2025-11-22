@@ -3,11 +3,56 @@ const crypto = require('crypto');
 const { User } = require('../models');
 const { sendPasswordResetEmail, sendPasswordChangedEmail } = require('../services/emailService');
 
+// Helpers: normalizar e validar CPF/CNPJ
+const onlyDigits = (v = '') => (v || '').toString().replace(/\D/g, '');
+
+function isValidCPF(cpf) {
+  cpf = onlyDigits(cpf);
+  if (!cpf || cpf.length !== 11) return false;
+  // rejeita CPFs com todos os dígitos iguais
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  const calc = (t) => {
+    let sum = 0;
+    for (let i = 0; i < t; i++) sum += parseInt(cpf.charAt(i)) * (t + 1 - i);
+    const r = 11 - (sum % 11);
+    return r > 9 ? 0 : r;
+  };
+
+  const d1 = calc(9);
+  const d2 = calc(10);
+  return d1 === parseInt(cpf.charAt(9)) && d2 === parseInt(cpf.charAt(10));
+}
+
+function isValidCNPJ(cnpj) {
+  cnpj = onlyDigits(cnpj);
+  if (!cnpj || cnpj.length !== 14) return false;
+  if (/^(\d)\1{13}$/.test(cnpj)) return false;
+
+  const calc = (pos) => {
+    let result = 0;
+    let weights = pos === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
+    for (let i = 0; i < weights.length; i++) {
+      result += parseInt(cnpj.charAt(i)) * weights[i];
+    }
+    const r = result % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+
+  const d1 = calc(12);
+  const d2 = calc(13);
+  return d1 === parseInt(cnpj.charAt(12)) && d2 === parseInt(cnpj.charAt(13));
+}
+
 class AuthController {
   // Registro de novo usuário
   async register(req, res, next) {
     try {
-      const { name, email, password, role } = req.body;
+      const { name, email, password, role, telefone, cpf_cnpj } = req.body;
+
+      // Normalizar telefone e cpf/cnpj (apenas dígitos)
+      const normalizedTelefone = telefone ? onlyDigits(telefone) : null;
+      const normalizedCpfCnpj = cpf_cnpj ? onlyDigits(cpf_cnpj) : null;
 
       // Validações básicas
       if (!name || !email || !password) {
@@ -26,12 +71,44 @@ class AuthController {
         });
       }
 
-      // Criar novo usuário
+      // Regras por papel:
+      // - participante ('user'): deve informar CPF válido (11 dígitos) e telefone
+      // - organizer: deve informar telefone e CPF ou CNPJ válidos
+      if (role === 'user') {
+        if (!normalizedTelefone || !normalizedCpfCnpj) {
+          return res.status(400).json({ success: false, message: 'Participantes devem informar telefone e CPF' });
+        }
+        if (normalizedCpfCnpj.length !== 11 || !isValidCPF(normalizedCpfCnpj)) {
+          return res.status(400).json({ success: false, message: 'CPF inválido para participante' });
+        }
+      }
+
+      if (role === 'organizer') {
+        if (!normalizedTelefone || !normalizedCpfCnpj) {
+          return res.status(400).json({ success: false, message: 'Organizadores devem informar telefone e CPF/CNPJ' });
+        }
+        // aceitar CPF (11) ou CNPJ (14)
+        if (normalizedCpfCnpj.length === 11) {
+          if (!isValidCPF(normalizedCpfCnpj)) {
+            return res.status(400).json({ success: false, message: 'CPF inválido' });
+          }
+        } else if (normalizedCpfCnpj.length === 14) {
+          if (!isValidCNPJ(normalizedCpfCnpj)) {
+            return res.status(400).json({ success: false, message: 'CNPJ inválido' });
+          }
+        } else {
+          return res.status(400).json({ success: false, message: 'CPF/CNPJ inválido' });
+        }
+      }
+
+      // Criar novo usuário (usar valores normalizados)
       const user = await User.create({
         name,
         email,
         password,
-        role: role || 'user'
+        role: role || 'user',
+        telefone: normalizedTelefone || null,
+        cpfCnpj: normalizedCpfCnpj || null
       });
 
       // Gerar token JWT

@@ -43,6 +43,16 @@ const User = sequelize.define('User', {
     ,
     field: 'papel'
   },
+  cpfCnpj: {
+    type: DataTypes.STRING(30),
+    allowNull: true,
+    field: 'cpf_cnpj'
+  },
+  telefone: {
+    type: DataTypes.STRING(30),
+    allowNull: true,
+    field: 'telefone'
+  },
   avatar: {
     type: DataTypes.STRING(255),
     allowNull: true

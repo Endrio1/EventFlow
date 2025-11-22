@@ -3,6 +3,7 @@ const User = require('./User');
 const Event = require('./Event');
 const Enrollment = require('./Enrollment');
 const Feedback = require('./Feedback');
+const Endereco = require('./Endereco');
 
 // Definir associações
 User.hasMany(Event, {
@@ -14,6 +15,10 @@ Event.belongsTo(User, {
   foreignKey: 'organizer_id',
   as: 'organizer'
 });
+
+// Usuário pode ter um endereço (nullable)
+User.belongsTo(Endereco, { foreignKey: 'endereco_id', as: 'endereco' });
+Endereco.hasMany(User, { foreignKey: 'endereco_id', as: 'users' });
 
 User.belongsToMany(Event, {
   through: Enrollment,
@@ -57,5 +62,6 @@ module.exports = {
   Event,
   Enrollment,
   Feedback,
+  Endereco,
   syncDatabase
 };
