@@ -217,6 +217,51 @@ BEGIN
   END IF;
 END$$;
 
+-- =========================
+-- Ensure ENUM and CHECK for inscricoes include 'refunded'
+-- =========================
+-- If there's a PostgreSQL enum type used by the application for inscricoes.status, add the value 'refunded'
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_type t
+    JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE t.typtype = 'e' AND t.typname = 'enum_inscricoes_status' AND n.nspname = 'public'
+  ) THEN
+    -- Safe add (Postgres 9.6+ supports IF NOT EXISTS in ALTER TYPE)
+    EXECUTE 'ALTER TYPE public.enum_inscricoes_status ADD VALUE IF NOT EXISTS ''refunded''';
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  -- ignore: if something goes wrong here we don't want the whole migration to fail
+  RAISE NOTICE 'Warning while attempting to alter enum_inscricoes_status: %', SQLERRM;
+END$$;
+
+-- If the table `inscricoes` exists and has a CHECK constraint on status, replace it to include 'refunded'
+DO $$
+DECLARE
+  cname text;
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inscricoes') THEN
+    SELECT conname INTO cname
+    FROM pg_constraint
+    WHERE conrelid = 'inscricoes'::regclass
+      AND contype = 'c'
+      AND pg_get_constraintdef(oid) ILIKE '%status IN%'
+    LIMIT 1;
+
+    IF cname IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE inscricoes DROP CONSTRAINT %I', cname);
+    END IF;
+
+    -- Add a new check constraint that includes 'refunded'
+    BEGIN
+      EXECUTE 'ALTER TABLE inscricoes ADD CONSTRAINT chk_inscricoes_status CHECK (status IN (''confirmed'',''cancelled'',''attended'',''refunded''))';
+    EXCEPTION WHEN duplicate_object THEN NULL; END;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'Warning while updating inscricoes check constraint: %', SQLERRM;
+END$$;
+
 COMMIT;
 
 -- End of consolidated migration

@@ -265,6 +265,10 @@ class API {
   async getEventParticipants(eventId) {
     return this.get(`/enrollments/events/${eventId}/participants`, true);
   }
+
+  async refundEnrollment(enrollmentId) {
+    return this.request(`/enrollments/${enrollmentId}/refund`, { method: 'PATCH', auth: true });
+  }
 }
 
 // Exportar instância da API

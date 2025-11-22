@@ -26,7 +26,7 @@ const Enrollment = sequelize.define('Enrollment', {
     }
   },
   status: {
-    type: DataTypes.ENUM('confirmed', 'cancelled', 'attended'),
+    type: DataTypes.ENUM('confirmed', 'cancelled', 'attended', 'refunded'),
     defaultValue: 'confirmed',
     allowNull: false
   },

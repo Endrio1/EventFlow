@@ -306,7 +306,7 @@ class EventController {
           as: 'participants',
           attributes: ['id', 'name', 'email'],
           through: {
-            attributes: ['status', 'enrollment_date']
+            attributes: ['id', 'status', 'enrollment_date']
           }
         }],
         order: [['date', 'ASC']]

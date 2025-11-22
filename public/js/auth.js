@@ -1,3 +1,31 @@
+// Funções utilitárias de máscara reutilizáveis
+const onlyDigits = v => (v || '').toString().replace(/\D/g, '');
+
+function formatCPF(d) {
+  d = (d || '').toString().replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+}
+
+function formatCNPJ(d) {
+  d = (d || '').toString().replace(/\D/g, '').slice(0, 14);
+  if (d.length <= 2) return d;
+  if (d.length <= 5) return `${d.slice(0,2)}.${d.slice(2)}`;
+  if (d.length <= 8) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`;
+  if (d.length <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
+  return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
+}
+
+function formatPhone(d) {
+  d = (d || '').toString().replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+}
+
 // Gerenciamento de Autenticação
 class AuthManager {
   constructor() {
@@ -153,6 +181,7 @@ class AuthManager {
         <div class="form-group">
           <label for="loginPassword">Senha</label>
           <input type="password" id="loginPassword" class="input-field" required>
+          <span class="toggle-password" onclick="togglePassword('loginPassword', this)" role="button" aria-pressed="false">👁️</span>
         </div>
         <div style="text-align: right; margin-bottom: 1rem;">
           <a href="/forgot-password.html" style="color: var(--primary-color); font-size: 0.875rem; text-decoration: none;">Esqueceu sua senha?</a>
@@ -194,6 +223,7 @@ class AuthManager {
         <div class="form-group">
           <label for="registerPassword">Senha</label>
           <input type="password" id="registerPassword" class="input-field" minlength="6" required>
+          <span class="toggle-password" onclick="togglePassword('registerPassword', this)" role="button" aria-pressed="false">👁️</span>
         </div>
         <div class="form-group">
           <label for="registerRole">Tipo de Conta</label>
@@ -253,25 +283,7 @@ class AuthManager {
     // initialize visibility
     toggleRegisterExtras();
 
-    // --- Máscara e comportamento do campo CPF / CNPJ ---
-    const onlyDigits = v => (v || '').toString().replace(/\D/g, '');
-
-    const formatCPF = (d) => {
-      d = d.slice(0, 11);
-      if (d.length <= 3) return d;
-      if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
-      if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
-      return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
-    };
-
-    const formatCNPJ = (d) => {
-      d = d.slice(0, 14);
-      if (d.length <= 2) return d;
-      if (d.length <= 5) return `${d.slice(0,2)}.${d.slice(2)}`;
-      if (d.length <= 8) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`;
-      if (d.length <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
-      return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
-    };
+    // --- Máscara e comportamento do campo CPF / CNPJ (usa as funções reutilizáveis definidas no topo do arquivo) ---
 
     function applyCpfCnpjMask() {
       if (!cpfInput) return;
@@ -326,14 +338,7 @@ class AuthManager {
       }
     });
 
-    // --- Máscara de telefone ---
-    const formatPhone = (d) => {
-      d = d.replace(/\D/g, '').slice(0, 11); // aceitar até 11 (inclui 9 dígitos mobile)
-      if (d.length <= 2) return `(${d}`;
-      if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`;
-      if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
-      return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
-    };
+    // --- Máscara de telefone (usa a função reutilizável `formatPhone`) ---
 
     function applyPhoneMask() {
       if (!phoneInput) return;
@@ -393,11 +398,10 @@ class AuthManager {
     const errorDiv = document.getElementById('registerError');
 
     try {
-      // Basic normalization: remove non-digits for phone and cpf/cnpj
-      const normalizeDigits = v => (v || '').replace(/\D/g,'');
-      const payload = { name, email, password, role };
-      if(phone) payload.telefone = normalizeDigits(phone);
-      if(cpf_cnpj) payload.cpf_cnpj = normalizeDigits(cpf_cnpj);
+  // Basic normalization: remove non-digits for phone and cpf/cnpj using shared helper
+  const payload = { name, email, password, role };
+  if (phone) payload.telefone = onlyDigits(phone);
+  if (cpf_cnpj) payload.cpf_cnpj = onlyDigits(cpf_cnpj);
 
       // Both roles must provide phone and cpf; participants must provide valid CPF (not CNPJ)
       if(!payload.telefone || !payload.cpf_cnpj){
@@ -487,6 +491,14 @@ class AuthManager {
           <label for="profileEmail">Email</label>
           <input type="email" id="profileEmail" class="input-field" value="${user.email}" required>
         </div>
+        <div class="form-group">
+          <label for="profilePhone">Telefone</label>
+          <input type="tel" id="profilePhone" class="input-field" value="${user.telefone || user.phone || ''}" placeholder="(99) 99999-9999">
+        </div>
+        <div class="form-group">
+          <label for="profileCpfCnpj">CPF / CNPJ</label>
+          <input type="text" id="profileCpfCnpj" class="input-field" value="${user.cpf_cnpj || user.cpfCnpj || ''}" placeholder="Somente números">
+        </div>
         <div id="profileError"></div>
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -499,10 +511,12 @@ class AuthManager {
         <div class="form-group">
           <label for="currentPassword">Senha Atual</label>
           <input type="password" id="currentPassword" class="input-field" required>
+          <span class="toggle-password" onclick="togglePassword('currentPassword', this)" role="button" aria-pressed="false">👁️</span>
         </div>
         <div class="form-group">
           <label for="newPassword">Nova Senha</label>
           <input type="password" id="newPassword" class="input-field" minlength="6" required>
+          <span class="toggle-password" onclick="togglePassword('newPassword', this)" role="button" aria-pressed="false">👁️</span>
         </div>
         <div id="passwordError"></div>
         <div class="form-actions">
@@ -516,6 +530,51 @@ class AuthManager {
       await this.handleUpdateProfile();
     });
 
+    // --- Máscaras e comportamento para telefone e CPF/CNPJ no perfil ---
+    const profilePhone = document.getElementById('profilePhone');
+    const profileCpf = document.getElementById('profileCpfCnpj');
+
+    function applyCpfCnpjMaskProfile() {
+      if (!profileCpf) return;
+      const digits = onlyDigits(profileCpf.value);
+      if (digits.length <= 11) profileCpf.value = formatCPF(digits);
+      else profileCpf.value = formatCNPJ(digits);
+      profileCpf.setAttribute('inputmode', 'numeric');
+    }
+
+    function onCpfCnpjPasteProfile(e) {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = onlyDigits(paste).slice(0,14);
+      if (digits.length <= 11) profileCpf.value = formatCPF(digits);
+      else profileCpf.value = formatCNPJ(digits);
+    }
+
+    function applyPhoneMaskProfile() {
+      if (!profilePhone) return;
+      const digits = onlyDigits(profilePhone.value).slice(0,11);
+      profilePhone.value = formatPhone(digits);
+      profilePhone.setAttribute('inputmode', 'tel');
+    }
+
+    function onPhonePasteProfile(e) {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text') || '';
+      const digits = onlyDigits(paste).slice(0,11);
+      profilePhone.value = formatPhone(digits);
+    }
+
+    if (profileCpf) {
+      profileCpf.addEventListener('input', applyCpfCnpjMaskProfile);
+      profileCpf.addEventListener('paste', onCpfCnpjPasteProfile);
+      applyCpfCnpjMaskProfile();
+    }
+    if (profilePhone) {
+      profilePhone.addEventListener('input', applyPhoneMaskProfile);
+      profilePhone.addEventListener('paste', onPhonePasteProfile);
+      applyPhoneMaskProfile();
+    }
+
     document.getElementById('passwordForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       await this.handleChangePassword();
@@ -525,14 +584,73 @@ class AuthManager {
   async handleUpdateProfile() {
     const name = document.getElementById('profileName').value;
     const email = document.getElementById('profileEmail').value;
+    const profilePhoneEl = document.getElementById('profilePhone');
+    const profileCpfEl = document.getElementById('profileCpfCnpj');
     const errorDiv = document.getElementById('profileError');
 
+
+
+    const isValidCPF = (cpf) => {
+      cpf = (cpf || '').replace(/\D/g,'');
+      if (!cpf || cpf.length !== 11) return false;
+      if (/^(\d)\1+$/.test(cpf)) return false;
+      let sum = 0;
+      for (let i = 0; i < 9; i++) sum += parseInt(cpf.charAt(i)) * (10 - i);
+      let rev = 11 - (sum % 11);
+      if (rev === 10 || rev === 11) rev = 0;
+      if (rev !== parseInt(cpf.charAt(9))) return false;
+      sum = 0;
+      for (let i = 0; i < 10; i++) sum += parseInt(cpf.charAt(i)) * (11 - i);
+      rev = 11 - (sum % 11);
+      if (rev === 10 || rev === 11) rev = 0;
+      return rev === parseInt(cpf.charAt(10));
+    };
+
+    const isValidCNPJ = (cnpj) => {
+      cnpj = (cnpj || '').replace(/\D/g,'');
+      if (!cnpj || cnpj.length !== 14) return false;
+      if (/^(\d)\1+$/.test(cnpj)) return false;
+      const t = cnpj.length - 2;
+      const digits = cnpj.substring(t);
+      const numbers = cnpj.substring(0, t);
+      let sum = 0;
+      let pos = t - 7;
+      for (let i = t; i >= 1; i--) {
+        sum += numbers.charAt(t - i) * pos--;
+        if (pos < 2) pos = 9;
+      }
+      let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+      if (result != digits.charAt(0)) return false;
+      sum = 0;
+      pos = t - 7;
+      const numbers2 = cnpj.substring(0, t) + digits.charAt(0);
+      for (let i = t + 1; i >= 1; i--) {
+        sum += numbers2.charAt(t + 1 - i) * pos--; if (pos < 2) pos = 9;
+      }
+      result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+      return result == digits.charAt(1);
+    };
+
     try {
-      const response = await api.updateProfile({ name, email });
+      const payload = { name, email };
+  if (profilePhoneEl && profilePhoneEl.value) payload.telefone = onlyDigits(profilePhoneEl.value);
+  if (profileCpfEl && profileCpfEl.value) payload.cpf_cnpj = onlyDigits(profileCpfEl.value);
+
+      // Basic client-side validation: if CPF/CNPJ provided, validate format
+      if (payload.cpf_cnpj) {
+        const digits = payload.cpf_cnpj;
+        if (!(digits.length === 11 ? isValidCPF(digits) : digits.length === 14 ? isValidCNPJ(digits) : false)) {
+          throw new Error('CPF ou CNPJ inválido. Verifique antes de salvar.');
+        }
+      }
+
+      const response = await api.updateProfile(payload);
       // Atualizar usuário no localStorage
       const user = api.getCurrentUser();
       user.name = name;
       user.email = email;
+      if (payload.telefone) user.telefone = payload.telefone;
+      if (payload.cpf_cnpj) user.cpf_cnpj = payload.cpf_cnpj;
       localStorage.setItem('user', JSON.stringify(user));
       
       errorDiv.innerHTML = '<div class="alert alert-success">Perfil atualizado com sucesso!</div>';
@@ -563,39 +681,8 @@ class AuthManager {
   }
 
   async showMyEnrollments() {
-    try {
-      const response = await api.getMyEnrollments();
-      const enrollments = response.data;
-
-      let content = '<div class="enrollments-list">';
-      
-      if (enrollments.length === 0) {
-        content += '<p style="text-align: center; color: var(--secondary-color);">Você ainda não se inscreveu em nenhum evento.</p>';
-      } else {
-        enrollments.forEach(enrollment => {
-          const event = enrollment.event;
-          const statusBadge = enrollment.status === 'confirmed' 
-            ? '<span style="color: var(--success-color);">✓ Confirmado</span>'
-            : '<span style="color: var(--error-color);">✗ Cancelado</span>';
-          
-          content += `
-            <div style="padding: 1rem; background: var(--background-color); border-radius: var(--border-radius); margin-bottom: 1rem;">
-              <h4 style="margin-bottom: 0.5rem;">${event.title}</h4>
-              <p style="color: var(--secondary-color); font-size: 0.9rem;">
-                ${new Date(event.date).toLocaleDateString('pt-BR')} às ${event.time}
-              </p>
-              <p style="margin-top: 0.5rem;">${statusBadge}</p>
-            </div>
-          `;
-        });
-      }
-      
-      content += '</div>';
-
-      this.createModal('Minhas Inscrições', content);
-    } catch (error) {
-      alert('Erro ao carregar inscrições: ' + error.message);
-    }
+    // Redireciona para a página dedicada de inscrições em vez de abrir modal
+    window.location.href = '/my-enrollments.html';
   }
 
   createModal(title, content) {
@@ -622,6 +709,21 @@ class AuthManager {
 function closeModal() {
   const container = document.getElementById('modalContainer');
   container.innerHTML = '';
+}
+
+// Função global para alternar visibilidade da senha
+function togglePassword(inputId, icon) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.textContent = '🙈';
+    icon.setAttribute('aria-pressed', 'true');
+  } else {
+    input.type = 'password';
+    icon.textContent = '👁️';
+    icon.setAttribute('aria-pressed', 'false');
+  }
 }
 
 // Inicializar quando o DOM estiver pronto

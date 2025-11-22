@@ -229,6 +229,48 @@ class EnrollmentController {
       next(error);
     }
   }
+
+  // Marcar inscrição como reembolsada (apenas organizador do evento ou admin)
+  async markRefunded(req, res, next) {
+    const transaction = await sequelize.transaction();
+    try {
+      const { enrollmentId } = req.params;
+
+      const enrollment = await Enrollment.findByPk(enrollmentId, { transaction });
+      if (!enrollment) {
+        await transaction.rollback();
+        return res.status(404).json({ success: false, message: 'Inscrição não encontrada' });
+      }
+
+      const event = await Event.findByPk(enrollment.event_id, { transaction });
+      if (!event) {
+        await transaction.rollback();
+        return res.status(404).json({ success: false, message: 'Evento não encontrado' });
+      }
+
+      // Apenas o organizador do evento ou admin podem marcar reembolso
+      if (event.organizer_id !== req.userId && req.userRole !== 'admin') {
+        await transaction.rollback();
+        return res.status(403).json({ success: false, message: 'Você não tem permissão para esta ação' });
+      }
+
+      // Somente inscrições canceladas podem ser marcadas como reembolsadas
+      if (enrollment.status !== 'cancelled') {
+        await transaction.rollback();
+        return res.status(400).json({ success: false, message: 'Apenas inscrições canceladas podem ser marcadas como reembolsadas' });
+      }
+
+      enrollment.status = 'refunded';
+      await enrollment.save({ transaction });
+
+      await transaction.commit();
+
+      return res.json({ success: true, message: 'Inscrição marcada como reembolsada' });
+    } catch (error) {
+      await transaction.rollback();
+      next(error);
+    }
+  }
 }
 
 module.exports = new EnrollmentController();

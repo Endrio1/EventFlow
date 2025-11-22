@@ -46,9 +46,15 @@ class DashboardManager {
     // Navegação da sidebar
     document.querySelectorAll('.sidebar-link').forEach(link => {
       link.addEventListener('click', (e) => {
-        e.preventDefault();
         const section = link.dataset.section;
-        this.showSection(section);
+        // If the link has a data-section attribute, treat it as an in-page navigation
+        if (section) {
+          e.preventDefault();
+          this.showSection(section);
+        } else {
+          // Otherwise allow the normal navigation (external/internal href)
+          // do not preventDefault so the browser will follow the href
+        }
       });
     });
 

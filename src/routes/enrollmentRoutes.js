@@ -21,4 +21,10 @@ router.get('/events/:eventId/participants',
   enrollmentController.eventParticipants
 );
 
+// Marcar inscrição como reembolsada (organizador/admin)
+router.patch('/:enrollmentId/refund', 
+  checkRole('organizer', 'admin'),
+  enrollmentController.markRefunded
+);
+
 module.exports = router;
