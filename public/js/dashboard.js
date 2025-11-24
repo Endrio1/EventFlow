@@ -58,32 +58,6 @@ class DashboardManager {
       });
     });
 
-    // User menu
-    // Use event.stopPropagation() to avoid the global click handler closing the menu
-    const avatarBtn = document.getElementById('userAvatar');
-    const dropdown = document.getElementById('dropdownMenu');
-    if (avatarBtn) {
-      avatarBtn.addEventListener('click', (e) => {
-        try {
-          e.stopPropagation();
-        } catch (err) {
-          /* ignore */
-        }
-        // toggle and log for debugging
-        dropdown?.classList.toggle('show');
-        // small debug log (remove if not needed)
-        // console.log('User avatar clicked, dropdown visible:', dropdown?.classList.contains('show'));
-      });
-    }
-
-    // Close dropdown when clicking outside nav-right
-    document.addEventListener('click', (e) => {
-      // if click is outside nav-right, hide dropdown
-      if (!e.target.closest || !e.target.closest('.nav-right')) {
-        dropdown?.classList.remove('show');
-      }
-    });
-
     // Botões
     document.getElementById('btnCreateEvent')?.addEventListener('click', () => {
       this.showCreateForm();
@@ -144,6 +118,12 @@ class DashboardManager {
         break;
       case 'create':
         this.resetForm();
+        break;
+      case 'refunds':
+        this.loadRefunds();
+        break;
+      case 'participants':
+        this.loadParticipantsSection();
         break;
     }
   }
@@ -540,6 +520,28 @@ class DashboardManager {
       preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 300px; border-radius: var(--border-radius); box-shadow: var(--shadow);">`;
     };
     reader.readAsDataURL(file);
+  }
+
+  loadRefunds() {
+    // O script refunds.js será executado automaticamente
+    // Apenas garantir que o container existe
+    const container = document.getElementById('refundsContainer');
+    if (container && !container.dataset.loaded) {
+      container.dataset.loaded = 'true';
+      // Disparar evento customizado para recarregar refunds
+      window.dispatchEvent(new CustomEvent('loadRefunds'));
+    }
+  }
+
+  loadParticipantsSection() {
+    // O script participants.js será executado automaticamente
+    // Apenas garantir que o container existe
+    const container = document.getElementById('participantsContainer');
+    if (container && !container.dataset.loaded) {
+      container.dataset.loaded = 'true';
+      // Disparar evento customizado para recarregar participants
+      window.dispatchEvent(new CustomEvent('loadParticipants'));
+    }
   }
 }
 

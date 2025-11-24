@@ -104,12 +104,14 @@
 
   // Enrollments modal
   async function openEnrollments(eventId, title){
+    ensureModalInBody();  // Garantir que modal está no body
     const modal = document.getElementById('enrollmentsModal');
     document.getElementById('modalTitle').textContent = 'Inscrições do Evento';
     document.getElementById('modalEventTitle').textContent = `#${eventId} — ${title}`;
     const list = document.getElementById('enrollmentsList');
     list.innerHTML = '<p class="muted">Carregando...</p>';
-    modal.style.display = 'flex';
+    modal.classList.add('show');
+    document.body.classList.add('modal-open');
 
     try{
       // Endpoint correto: /api/enrollments/events/:eventId/participants
@@ -159,17 +161,29 @@
 
   function closeModal(){
     const modal = document.getElementById('enrollmentsModal');
-    modal.style.display = 'none';
+    modal.classList.remove('show');
+    document.body.classList.remove('modal-open');
+  }
+  
+  // Função para garantir que o modal esteja no body e não em outro container
+  function ensureModalInBody() {
+    const modal = document.getElementById('enrollmentsModal');
+    if (modal && modal.parentElement !== document.body) {
+      console.log('Movendo modal para body...');
+      document.body.appendChild(modal);
+    }
   }
 
   // Ver detalhes do usuário
   async function viewUserDetails(userId){
+    ensureModalInBody();  // Garantir que modal está no body
     const modal = document.getElementById('enrollmentsModal');
     document.getElementById('modalTitle').textContent = 'Detalhes do Usuário';
     document.getElementById('modalEventTitle').textContent = '';
     const list = document.getElementById('enrollmentsList');
     list.innerHTML = '<p class="muted">Carregando informações do usuário...</p>';
-    modal.style.display = 'flex';
+    modal.classList.add('show');
+    document.body.classList.add('modal-open');
 
     try {
       // Buscar usuário específico por ID
@@ -185,55 +199,41 @@
       const roleLabel = user.role === 'admin' ? 'Administrador' : user.role === 'organizer' ? 'Organizador' : 'Participante';
       
       list.innerHTML = `
-        <div style="background: #f1f5f9; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #667eea;">
-          <h4 style="margin: 0 0 1.25rem 0; color: #1e293b; font-size: 1.125rem;">Informações Completas</h4>
-          <div style="display: grid; gap: 1rem;">
-            <div style="padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <strong style="color: #475569; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.5px;">ID</strong><br>
-              <span style="color: #0f172a; font-size: 1rem; font-weight: 500;">${user.id}</span>
+        <div class="modal-content">
+          <h4 class="modal-section-title">Informações Completas</h4>
+          <div class="modal-fields">
+            <div class="modal-field">
+              <strong class="info-label">ID</strong>
+              <span class="info-value">${user.id}</span>
             </div>
-            <div style="padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <strong style="color: #475569; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.5px;">Nome</strong><br>
-              <span style="color: #0f172a; font-size: 1rem; font-weight: 500;">${escapeHtml(user.name || user.fullName || '—')}</span>
+            <div class="modal-field">
+              <strong class="info-label">Nome</strong>
+              <span class="info-value">${escapeHtml(user.name || user.fullName || '—')}</span>
             </div>
-            <div style="padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <strong style="color: #475569; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.5px;">Email</strong><br>
-              <span style="color: #0f172a; font-size: 1rem; font-weight: 500;">${escapeHtml(user.email || '—')}</span>
+            <div class="modal-field">
+              <strong class="info-label">Email</strong>
+              <span class="info-value">${escapeHtml(user.email || '—')}</span>
             </div>
-            <div style="padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <strong style="color: #475569; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.5px;">Tipo de Conta</strong><br>
+            <div class="modal-field">
+              <strong class="info-label">Tipo de Conta</strong>
               <span class="badge ${roleBadge}">${roleLabel}</span>
             </div>
-            <div style="padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <strong style="color: #475569; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.5px;">Cadastrado em</strong><br>
-              <span style="color: #0f172a; font-size: 1rem; font-weight: 500;">${user.createdAt ? new Date(user.createdAt).toLocaleString('pt-BR') : '—'}</span>
+            <div class="modal-field">
+              <strong class="info-label">Cadastrado em</strong>
+              <span class="info-value">${user.createdAt ? new Date(user.createdAt).toLocaleString('pt-BR') : '—'}</span>
             </div>
           </div>
           
-          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0;">
-            <h4 style="margin: 0 0 0.75rem 0; color: #1e293b; font-size: 1rem;">Ações Administrativas</h4>
+          <div class="modal-admin-actions">
+            <h4 class="modal-section-title">Ações Administrativas</h4>
             <button 
               class="btn-send-reset-password"
               data-user-id="${user.id}"
-              data-user-email="${escapeAttr(user.email)}" 
-              style="
-                width: 100%;
-                padding: 12px;
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: transform 0.2s, box-shadow 0.2s;
-              "
-              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(245, 158, 11, 0.3)';"
-              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+              data-user-email="${escapeAttr(user.email)}"
             >
               🔑 Enviar Link de Redefinição de Senha
             </button>
-            <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #64748b; text-align: center;">
+            <p class="modal-help-text">
               O usuário receberá um email com instruções para criar uma nova senha
             </p>
           </div>
@@ -330,7 +330,36 @@
   // debounce
   function debounce(fn, wait=300){ let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), wait); }; }
 
+  // Populate admin user info
+  function populateAdminInfo() {
+    const token = getToken();
+    if (!token) {
+      window.location.href = '/';
+      return;
+    }
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userName = payload.name || 'Admin';
+      const userNameDisplay = document.getElementById('adminUserName');
+      const avatarSpan = document.getElementById('adminAvatar');
+      
+      if (userNameDisplay) {
+        userNameDisplay.textContent = userName;
+      }
+      
+      if (avatarSpan) {
+        avatarSpan.textContent = userName.charAt(0).toUpperCase();
+      }
+    } catch (err) {
+      console.error('Erro ao decodificar token:', err);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', ()=>{
+    // Populate admin info first
+    populateAdminInfo();
+    
     // initial load
     loadUsers();
     loadEvents();

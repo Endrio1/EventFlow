@@ -3,6 +3,6 @@
     "development"
   ],
   "hints": {
-    "button-type": "on"
+    "button-type": "default"
   }
 }
