@@ -5,12 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EventFlow - Gerenciamento de Eventos</title>
   <!-- Cache busting: increment v param se estilos não atualizarem -->
-  <link rel="stylesheet" href="/css/style.css?v=20251124-1">
-  <!-- Fallback temporário para diagnosticar: REMOVER após confirmar estilos -->
-  <style>
-    /* Se você vê este fundo vermelho nos cards, o CSS externo não está sendo aplicado */
-    .stat-card.__fallback-test { background: #ff375f !important; color:#fff !important; }
-  </style>
+  <link rel="stylesheet" href="/css/style.css?v=20251124-2">
+  <link rel="stylesheet" href="/css/about-footer.css?v=1">
+  <!-- Fallback removido após extração; usar DevTools se precisar diagnosticar -->
 </head>
 <body>
   <!-- Navbar integrada com Hero -->
@@ -20,7 +17,7 @@
         <div class="logo">
           <h2>Event<span>Flow</span></h2>
         </div>
-        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Abrir menu de navegação">
           <span></span>
           <span></span>
           <span></span>
@@ -83,7 +80,7 @@
       <div class="filters-container">
         <div class="search-box">
           <input type="text" id="searchInput" placeholder="Buscar eventos..." class="input-field">
-          <button class="btn btn-primary" id="searchBtn">
+          <button class="btn btn-primary" id="searchBtn" aria-label="Buscar eventos" title="Buscar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
