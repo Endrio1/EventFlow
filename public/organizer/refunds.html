@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos de Reembolso - EventFlow</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="page-header">
+    <nav class="navbar">
+      <div class="container nav-container">
+        <div class="logo">
+          <h2><a href="/" style="color: white; text-decoration: none;">Event<span>Flow</span></a></h2>
+        </div>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="/dashboard.html" class="nav-link">Dashboard</a></li>
+          <li><a href="/organizer/participants.html" class="nav-link">Participantes</a></li>
+        </ul>
+        <div id="userMenu" class="user-menu" style="display: block;">
+          <button class="user-avatar" id="userAvatar">
+            <span id="userName">U</span>
+          </button>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="#" id="myEnrollmentsLink">Minhas Inscrições</a>
+            <a href="#" id="profileLink">Perfil</a>
+            <a href="#" id="logoutBtn">Sair</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-title-section">
+        <h1>Pedidos de Reembolso</h1>
+        <p class="page-subtitle">Gerencie solicitações de cancelamento e reembolso</p>
+      </div>
+      
+      <section id="refundsContainer" class="content-section">
+        <div class="loading-state">
+          <p>Carregando pedidos de reembolso...</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/refunds.js"></script>
+</body>
+</html>

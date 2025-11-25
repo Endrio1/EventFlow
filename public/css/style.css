@@ -1387,6 +1387,7 @@ body {
   border: 1px solid #fca5a5;
 }
 
+<<<<<<< HEAD
 /* Links especiais dentro do modal (ex: "Esqueceu sua senha?", "Cadastre-se") */
 .modal-body a {
   color: #667eea;
@@ -1480,6 +1481,8 @@ body {
   }
 }
 
+=======
+>>>>>>> parent of 456c26e (Atualização: Melhorias no design)
 =======
 >>>>>>> parent of 456c26e (Atualização: Melhorias no design)
 .alert-info {

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Função para carregar os dados de participantes
 window.loadParticipantsData = async function() {
   const selectEvent = document.getElementById('selectEvent');
@@ -8,6 +9,12 @@ window.loadParticipantsData = async function() {
     console.warn('Elementos de participantes não encontrados');
     return;
   }
+=======
+(async function () {
+  const selectEvent = document.getElementById('selectEvent');
+  const participantsContainer = document.getElementById('participantsContainer');
+  const searchInput = document.getElementById('searchInput');
+>>>>>>> parent of 456c26e (Atualização: Melhorias no design)
 
   function renderParticipants(list) {
     if (!list || list.length === 0) {
@@ -88,5 +95,9 @@ window.loadParticipantsData = async function() {
     console.error(err);
     participantsContainer.innerHTML = '<div class="alert alert-error">Erro ao carregar eventos. Verifique se você está autenticado como organizador.</div>';
   }
+<<<<<<< HEAD
 };
+=======
+})();
+>>>>>>> parent of 456c26e (Atualização: Melhorias no design)
 
