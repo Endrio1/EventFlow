@@ -92,3 +92,15 @@ window.loadParticipantsData = async function() {
   }
 };
 
+// Auto-run when loaded as a standalone page (organizer/participants.html)
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    if (document.getElementById('participantsContainer') || document.getElementById('selectEvent')) {
+      // call but don't await to avoid blocking
+      window.loadParticipantsData().catch(err => console.error('Erro loadParticipantsData auto-run:', err));
+    }
+  } catch (e) {
+    console.error('Erro ao auto-executar loadParticipantsData:', e);
+  }
+});
+
