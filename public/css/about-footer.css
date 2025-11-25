@@ -66,9 +66,8 @@
 
 .about-stats {
   display: grid;
-  grid-template-columns: 1fr; /* empilhado verticalmente em todas as larguras */
-  gap: 1.25rem;
-  max-width: 520px; /* opcional: limita largura total do bloco de estatísticas */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
 }
 
 .stat-card {
@@ -189,5 +188,5 @@
 }
 
 /* Responsive */
-@media (max-width: 900px) { .about-content { grid-template-columns: 1fr; } }
-/* Mantemos uma única coluna também no mobile, então não precisamos de media query extra para .about-stats */
+@media (max-width: 900px) { .about-content { grid-template-columns: 1fr; } .about-stats { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .about-stats { grid-template-columns: 1fr; } }
