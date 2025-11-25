@@ -23,7 +23,18 @@
           <li><a href="/open-events.html" class="nav-link">Eventos Abertos</a></li>
           <li><a href="/index.html#about" class="nav-link">Sobre</a></li>
         </ul>
-        <div id="userMenu" class="user-menu" style="display: none;"></div>
+        <div id="userMenu" class="user-menu">
+          <button class="user-avatar" id="userAvatar">
+            <span id="userName">U</span>
+          </button>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="#" id="myEventsLink">Meus Eventos</a>
+            <a href="#" id="myEnrollmentsLink">Minhas Inscrições</a>
+            <a href="/admin.html" id="adminLink" class="hidden">Painel Admin</a>
+            <a href="#" id="profileLink">Perfil</a>
+            <a href="#" id="logoutBtn">Sair</a>
+          </div>
+        </div>
       </div>
     </nav>
 
