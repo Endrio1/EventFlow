@@ -1,20 +1,13 @@
-<<<<<<< HEAD
 // Função para carregar os dados de participantes
 window.loadParticipantsData = async function() {
   const selectEvent = document.getElementById('selectEvent');
   const participantsContainer = document.getElementById('participantsContainer');
   const searchInput = document.getElementById('searchInput');
-  
+
   if (!selectEvent || !participantsContainer) {
     console.warn('Elementos de participantes não encontrados');
     return;
   }
-=======
-(async function () {
-  const selectEvent = document.getElementById('selectEvent');
-  const participantsContainer = document.getElementById('participantsContainer');
-  const searchInput = document.getElementById('searchInput');
->>>>>>> parent of 456c26e (Atualização: Melhorias no design)
 
   function renderParticipants(list) {
     if (!list || list.length === 0) {
@@ -28,7 +21,7 @@ window.loadParticipantsData = async function() {
       const name = p.name || p.nome || (p.user && p.user.name) || '—';
       const email = p.email || (p.user && p.user.email) || '—';
       const status = enrollment.status || '—';
-      const statusClass = status.toLowerCase();
+      const statusClass = (status || '').toLowerCase();
       const date = enrollment.enrollment_date || enrollment.data_inscricao || enrollment.created_at || enrollment.createdAt || '—';
       const formattedDate = date !== '—' ? new Date(date).toLocaleDateString('pt-BR') : date;
       
@@ -80,24 +73,22 @@ window.loadParticipantsData = async function() {
       loadParticipants();
     });
 
-    searchInput.addEventListener('input', () => {
-      const q = searchInput.value.toLowerCase().trim();
-      const rows = participantsContainer.querySelectorAll('tbody tr');
-      if (!rows) return;
-      rows.forEach(r => {
-        const text = r.textContent.toLowerCase();
-        r.style.display = text.includes(q) ? '' : 'none';
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase().trim();
+        const rows = participantsContainer.querySelectorAll('tbody tr');
+        if (!rows) return;
+        rows.forEach(r => {
+          const text = r.textContent.toLowerCase();
+          r.style.display = text.includes(q) ? '' : 'none';
+        });
       });
-    });
+    }
 
     // Não carregar primeiro evento automaticamente - deixar o usuário escolher
   } catch (err) {
     console.error(err);
     participantsContainer.innerHTML = '<div class="alert alert-error">Erro ao carregar eventos. Verifique se você está autenticado como organizador.</div>';
   }
-<<<<<<< HEAD
 };
-=======
-})();
->>>>>>> parent of 456c26e (Atualização: Melhorias no design)
 

@@ -1,16 +1,10 @@
-<<<<<<< HEAD
 // Função para carregar os dados de reembolsos
 window.loadRefundsData = async function() {
   const container = document.getElementById('refundsContainer');
-  
   if (!container) {
     console.warn('Container de reembolsos não encontrado');
     return;
   }
-=======
-(async function () {
-  const container = document.getElementById('refundsContainer');
->>>>>>> parent of 456c26e (Atualização: Melhorias no design)
 
   function renderMessage(msg, type = 'info') {
     container.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
@@ -89,8 +83,4 @@ window.loadRefundsData = async function() {
     console.error(err);
     renderMessage('Erro ao carregar pedidos de reembolso. Verifique se você está autenticado como organizador.', 'error');
   }
-<<<<<<< HEAD
 };
-=======
-})();
->>>>>>> parent of 456c26e (Atualização: Melhorias no design)

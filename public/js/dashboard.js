@@ -148,7 +148,6 @@ class DashboardManager {
       case 'create':
         this.resetForm();
         break;
-<<<<<<< HEAD
       case 'refunds':
         // Carrega os dados de reembolsos
         if (typeof window.loadRefundsData === 'function') {
@@ -161,8 +160,6 @@ class DashboardManager {
           window.loadParticipantsData();
         }
         break;
-=======
->>>>>>> parent of 456c26e (Atualização: Melhorias no design)
     }
   }
 

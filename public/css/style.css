@@ -12,15 +12,13 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --border-radius: 12px;
   --transition: all 0.3s ease;
-}
 
-* {
+/* Links especiais dentro do modal (ex: "Esqueceu sua senha?", "Cadastre-se") */
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
 
-body {
+/* Links especiais dentro do modal (ex: "Esqueceu sua senha?", "Cadastre-se") */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
@@ -781,24 +779,9 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
-<<<<<<< HEAD
 /* About & Footer styles moved to about-footer.css */
-
 /* Modal Styles - Design Ultra Moderno e Suave */
-=======
-/* About Section */
-.about-section {
-  background: var(--white);
-  padding: 4rem 0;
-}
 
-.about-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  align-items: center;
-}
 
 .about-text h2 {
   font-size: 2.5rem;
@@ -924,7 +907,6 @@ body {
 }
 
 /* Modal Styles */
->>>>>>> parent of 456c26e (Atualização: Melhorias no design)
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1386,8 +1368,7 @@ body {
   color: #991b1b;
   border: 1px solid #fca5a5;
 }
-
-<<<<<<< HEAD
+/* marker removed */
 /* Links especiais dentro do modal (ex: "Esqueceu sua senha?", "Cadastre-se") */
 .modal-body a {
   color: #667eea;
@@ -1443,7 +1424,6 @@ body {
   margin-top: 0.5rem;
 }
 
-<<<<<<< HEAD
 /* ===== Overrides to ensure the search bar centers correctly ===== */
 /* These rules are intentionally specific and use !important to avoid conflicts
    with other layout rules or previously loaded CSS. */
@@ -1481,10 +1461,7 @@ body {
   }
 }
 
-=======
->>>>>>> parent of 456c26e (Atualização: Melhorias no design)
-=======
->>>>>>> parent of 456c26e (Atualização: Melhorias no design)
+/* end of overrides */
 .alert-info {
   background: #dbeafe;
   color: #1e40af;
