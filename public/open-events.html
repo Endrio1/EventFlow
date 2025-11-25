@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EventFlow - Eventos Abertos</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=20251125-4">
 </head>
 <body>
   <header class="hero-section">
@@ -19,10 +19,14 @@
           <span></span>
         </button>
         <ul class="nav-menu" id="navMenu">
-          <li><a href="/" class="nav-link">Início</a></li>
-          <li><a href="/" class="nav-link">Sobre</a></li>
+          <li><a href="/index.html#home" class="nav-link">Início</a></li>
+          <li><a href="/index.html#about" class="nav-link">Sobre</a></li>
+          <li id="authButtons">
+            <a href="#login" class="btn btn-outline" id="loginBtn">Entrar</a>
+            <a href="#register" class="btn btn-primary" id="registerBtn">Cadastrar</a>
+          </li>
         </ul>
-        <div id="userMenu" class="user-menu" style="display: none;">
+        <div id="userMenu" class="user-menu">
           <button class="user-avatar" id="userAvatar">
             <span id="userName">U</span>
           </button>
@@ -54,7 +58,7 @@
       <div class="filters-container">
         <div class="search-box">
           <input type="text" id="searchInput" placeholder="Buscar eventos abertos..." class="input-field">
-          <button class="btn btn-primary" id="searchBtn">
+          <button class="btn btn-primary" id="searchBtn" aria-label="Buscar eventos" title="Buscar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
@@ -62,7 +66,7 @@
           </button>
         </div>
         <div class="filter-group">
-          <select id="categoryFilter" class="input-field">
+          <select id="categoryFilter" class="input-field" title="Filtrar por categoria">
             <option value="">Todas Categorias</option>
             <option value="tecnologia">Tecnologia</option>
             <option value="negocios">Negócios</option>
@@ -106,7 +110,7 @@
   <div id="modalContainer"></div>
 
   <script src="/js/api.js"></script>
-  <script src="/js/auth.js"></script>
+  <script src="/js/auth.js?v=20251125-3"></script>
   <script src="/js/utils.js"></script>
   <script src="/js/events.js"></script>
   <script src="/js/open-events.js"></script>

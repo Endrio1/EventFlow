@@ -1,6 +1,9 @@
 // Funções utilitárias de máscara reutilizáveis
 const onlyDigits = v => (v || '').toString().replace(/\D/g, '');
 
+// Debug: indicar que o arquivo auth.js foi carregado
+console.log('[auth.js] loaded');
+
 function formatCPF(d) {
   d = (d || '').toString().replace(/\D/g, '').slice(0, 11);
   if (d.length <= 3) return d;
@@ -38,7 +41,7 @@ class AuthManager {
   }
 
   attachEventListeners() {
-    // Botões de login e registro
+    // Botões de login e registro (binding direto)
     document.getElementById('loginBtn')?.addEventListener('click', (e) => {
       e.preventDefault();
       this.showLoginModal();
@@ -47,6 +50,19 @@ class AuthManager {
     document.getElementById('registerBtn')?.addEventListener('click', (e) => {
       e.preventDefault();
       this.showRegisterModal();
+    });
+
+    // Delegação de eventos para garantir funcionamento mesmo se o DOM for re-renderizado
+    document.addEventListener('click', (e) => {
+      const loginTrigger = e.target.closest && e.target.closest('#loginBtn');
+      const registerTrigger = e.target.closest && e.target.closest('#registerBtn');
+      if (loginTrigger) {
+        e.preventDefault();
+        this.showLoginModal();
+      } else if (registerTrigger) {
+        e.preventDefault();
+        this.showRegisterModal();
+      }
     });
 
     // Logout
@@ -172,19 +188,23 @@ class AuthManager {
   }
 
   showLoginModal() {
+    console.log('[auth.js] showLoginModal called');
     const modal = this.createModal('Login', `
       <form id="loginForm">
         <div class="form-group">
           <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" class="input-field" required>
+          <input type="email" id="loginEmail" class="input-field" required autocomplete="username" autocapitalize="none" spellcheck="false">
         </div>
         <div class="form-group">
           <label for="loginPassword">Senha</label>
-          <input type="password" id="loginPassword" class="input-field" required>
-          <span class="toggle-password" onclick="togglePassword('loginPassword', this)" role="button" aria-pressed="false">👁️</span>
+          <input type="password" id="loginPassword" class="input-field" required autocomplete="current-password">
+          <span class="toggle-password" onclick="togglePassword('loginPassword', this)" role="button" aria-pressed="false" tabindex="0" aria-label="Mostrar/ocultar senha" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePassword('loginPassword', this);}">
+            <span class="icon-eye" aria-hidden="true">👁️</span>
+            <span class="icon-eye-off" aria-hidden="true">🙈</span>
+          </span>
         </div>
-        <div style="text-align: right; margin-bottom: 1rem;">
-          <a href="/forgot-password.html" style="color: var(--primary-color); font-size: 0.875rem; text-decoration: none;">Esqueceu sua senha?</a>
+        <div class="forgot-link-wrapper">
+          <a href="/forgot-password.html" class="modal-forgot-link">Esqueceu sua senha?</a>
         </div>
         <div id="loginError"></div>
         <div class="form-actions">
@@ -192,8 +212,8 @@ class AuthManager {
           <button type="submit" class="btn btn-primary">Entrar</button>
         </div>
       </form>
-      <p style="text-align: center; margin-top: 1rem;">
-        Não tem conta? <a href="#" id="switchToRegister" style="color: var(--primary-color); font-weight: 600;">Cadastre-se</a>
+      <p class="modal-footer-text">
+        Não tem conta? <a href="#" id="switchToRegister" class="modal-link-primary">Cadastre-se</a>
       </p>
     `);
 
@@ -210,6 +230,7 @@ class AuthManager {
   }
 
   showRegisterModal() {
+    console.log('[auth.js] showRegisterModal called');
     const modal = this.createModal('Cadastrar', `
       <form id="registerForm">
         <div class="form-group">
@@ -218,12 +239,19 @@ class AuthManager {
         </div>
         <div class="form-group">
           <label for="registerEmail">Email</label>
-          <input type="email" id="registerEmail" class="input-field" required>
+          <input type="email" id="registerEmail" class="input-field" required autocomplete="email" autocapitalize="none" spellcheck="false">
         </div>
         <div class="form-group">
           <label for="registerPassword">Senha</label>
-          <input type="password" id="registerPassword" class="input-field" minlength="6" required>
-          <span class="toggle-password" onclick="togglePassword('registerPassword', this)" role="button" aria-pressed="false">👁️</span>
+          <input type="password" id="registerPassword" class="input-field" minlength="6" required autocomplete="new-password">
+          <span class="toggle-password" onclick="togglePassword('registerPassword', this)" role="button" aria-pressed="false" tabindex="0" aria-label="Mostrar/ocultar senha" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePassword('registerPassword', this);}">
+            <span class="icon-eye" aria-hidden="true">👁️</span>
+            <span class="icon-eye-off" aria-hidden="true">🙈</span>
+          </span>
+          <ul class="password-requirements" aria-live="polite">
+            <li id="regLengthReq" class="invalid">Mínimo de 6 caracteres</li>
+            <li>Recomendado: letras maiúsculas/minúsculas, números e símbolos</li>
+          </ul>
         </div>
         <div class="form-group">
           <label for="registerRole">Tipo de Conta</label>
@@ -232,11 +260,11 @@ class AuthManager {
             <option value="organizer">Organizador</option>
           </select>
         </div>
-        <div class="form-group" id="registerPhoneGroup" style="display:none;">
+  <div class="form-group hidden" id="registerPhoneGroup">
           <label for="registerPhone">Contato (Telefone)</label>
           <input type="tel" id="registerPhone" class="input-field" placeholder="(99) 99999-9999">
         </div>
-        <div class="form-group" id="registerCpfCnpjGroup" style="display:none;">
+  <div class="form-group hidden" id="registerCpfCnpjGroup">
           <label for="registerCpfCnpj">CPF / CNPJ</label>
           <input type="text" id="registerCpfCnpj" class="input-field" placeholder="Somente números">
         </div>
@@ -246,8 +274,8 @@ class AuthManager {
           <button type="submit" class="btn btn-primary">Cadastrar</button>
         </div>
       </form>
-      <p style="text-align: center; margin-top: 1rem;">
-        Já tem conta? <a href="#" id="switchToLogin" style="color: var(--primary-color); font-weight: 600;">Faça login</a>
+      <p class="modal-footer-text">
+        Já tem conta? <a href="#" id="switchToLogin" class="modal-link-primary">Faça login</a>
       </p>
     `);
 
@@ -255,6 +283,17 @@ class AuthManager {
       e.preventDefault();
       await this.handleRegister();
     });
+
+    // Validação em tempo real da senha de cadastro
+    const regPassInput = document.getElementById('registerPassword');
+    const regLenReq = document.getElementById('regLengthReq');
+    if (regPassInput && regLenReq) {
+      regPassInput.addEventListener('input', (e) => {
+        const ok = (e.target.value || '').length >= 6;
+        regLenReq.classList.toggle('valid', ok);
+        regLenReq.classList.toggle('invalid', !ok);
+      });
+    }
 
     // Mostrar/ocultar campos de contato e CPF/CNPJ conforme o tipo de conta
     const roleSelect = document.getElementById('registerRole');
@@ -489,7 +528,7 @@ class AuthManager {
         </div>
         <div class="form-group">
           <label for="profileEmail">Email</label>
-          <input type="email" id="profileEmail" class="input-field" value="${user.email}" required>
+          <input type="email" id="profileEmail" class="input-field" value="${user.email}" required autocomplete="email" autocapitalize="none" spellcheck="false">
         </div>
         <div class="form-group">
           <label for="profilePhone">Telefone</label>
@@ -505,18 +544,28 @@ class AuthManager {
           <button type="submit" class="btn btn-primary">Salvar</button>
         </div>
       </form>
-      <hr style="margin: 2rem 0;">
-      <h3 style="margin-bottom: 1rem;">Alterar Senha</h3>
+  <hr class="modal-divider">
+  <h3 class="modal-subtitle">Alterar Senha</h3>
       <form id="passwordForm">
         <div class="form-group">
           <label for="currentPassword">Senha Atual</label>
-          <input type="password" id="currentPassword" class="input-field" required>
-          <span class="toggle-password" onclick="togglePassword('currentPassword', this)" role="button" aria-pressed="false">👁️</span>
+          <input type="password" id="currentPassword" class="input-field" required autocomplete="current-password">
+          <span class="toggle-password" onclick="togglePassword('currentPassword', this)" role="button" aria-pressed="false" tabindex="0" aria-label="Mostrar/ocultar senha" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePassword('currentPassword', this);}">
+            <span class="icon-eye" aria-hidden="true">👁️</span>
+            <span class="icon-eye-off" aria-hidden="true">🙈</span>
+          </span>
         </div>
         <div class="form-group">
           <label for="newPassword">Nova Senha</label>
-          <input type="password" id="newPassword" class="input-field" minlength="6" required>
-          <span class="toggle-password" onclick="togglePassword('newPassword', this)" role="button" aria-pressed="false">👁️</span>
+          <input type="password" id="newPassword" class="input-field" minlength="6" required autocomplete="new-password">
+          <span class="toggle-password" onclick="togglePassword('newPassword', this)" role="button" aria-pressed="false" tabindex="0" aria-label="Mostrar/ocultar senha" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePassword('newPassword', this);}">
+            <span class="icon-eye" aria-hidden="true">👁️</span>
+            <span class="icon-eye-off" aria-hidden="true">🙈</span>
+          </span>
+          <ul class="password-requirements" aria-live="polite">
+            <li id="chgLengthReq" class="invalid">Mínimo de 6 caracteres</li>
+            <li>Recomendado: letras maiúsculas/minúsculas, números e símbolos</li>
+          </ul>
         </div>
         <div id="passwordError"></div>
         <div class="form-actions">
@@ -579,6 +628,17 @@ class AuthManager {
       e.preventDefault();
       await this.handleChangePassword();
     });
+
+    // Validação em tempo real da nova senha no perfil
+    const chgPassInput = document.getElementById('newPassword');
+    const chgLenReq = document.getElementById('chgLengthReq');
+    if (chgPassInput && chgLenReq) {
+      chgPassInput.addEventListener('input', (e) => {
+        const ok = (e.target.value || '').length >= 6;
+        chgLenReq.classList.toggle('valid', ok);
+        chgLenReq.classList.toggle('invalid', !ok);
+      });
+    }
   }
 
   async handleUpdateProfile() {
@@ -689,9 +749,9 @@ class AuthManager {
     const modalHTML = `
       <div class="modal-overlay" onclick="if(event.target === this) closeModal()">
         <div class="modal">
+          <button class="modal-close" onclick="closeModal()" aria-label="Fechar modal">&times;</button>
           <div class="modal-header">
             <h2>${title}</h2>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
           </div>
           <div class="modal-body">
             ${content}
@@ -700,15 +760,54 @@ class AuthManager {
       </div>
     `;
 
-    const container = document.getElementById('modalContainer');
+  const container = document.getElementById('modalContainer');
+  console.log('[auth.js] createModal called for:', title, 'modalContainer present:', !!container);
+  if (container) {
     container.innerHTML = modalHTML;
+  } else {
+    // fallback: anexar ao body sem sobrescrever o conteúdo existente
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  }
+  const overlayEl = document.querySelector('.modal-overlay');
+  console.log('[auth.js] modal inserted. overlayExists:', !!overlayEl);
+  // Fallback robusto: garantir estilos inline mínimos para que o modal seja visível
+  if (overlayEl) {
+    try {
+      overlayEl.style.position = overlayEl.style.position || 'fixed';
+      overlayEl.style.top = overlayEl.style.top || '0';
+      overlayEl.style.left = overlayEl.style.left || '0';
+      overlayEl.style.right = overlayEl.style.right || '0';
+      overlayEl.style.bottom = overlayEl.style.bottom || '0';
+      overlayEl.style.zIndex = overlayEl.style.zIndex || '99999';
+      overlayEl.style.display = overlayEl.style.display || 'flex';
+      overlayEl.style.alignItems = overlayEl.style.alignItems || 'center';
+      overlayEl.style.justifyContent = overlayEl.style.justifyContent || 'center';
+      overlayEl.style.background = overlayEl.style.background || 'rgba(0,0,0,0.7)';
+      overlayEl.style.padding = overlayEl.style.padding || '1rem';
+    } catch (err) {
+      console.warn('[auth.js] failed to apply inline overlay styles', err);
+    }
+  }
+  // Apply inline styles to inner modal element intentionally removed so external CSS controls the modal appearance.
+  // This prevents inline styles from overriding author stylesheet. Rely on CSS rules in /css/style.css.
+  try { document.body.classList.add('modal-open'); } catch {}
   }
 }
 
 // Função global para fechar modal
 function closeModal() {
+  console.log('[auth.js] closeModal called');
   const container = document.getElementById('modalContainer');
-  container.innerHTML = '';
+  if (container) {
+    container.innerHTML = '';
+  } else {
+    // caso o modal tenha sido anexado diretamente ao body
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay && overlay.parentElement === document.body) {
+      document.body.removeChild(overlay);
+    }
+  }
+  try { document.body.classList.remove('modal-open'); } catch {}
 }
 
 // Função global para alternar visibilidade da senha
@@ -717,16 +816,33 @@ function togglePassword(inputId, icon) {
   if (!input) return;
   if (input.type === 'password') {
     input.type = 'text';
-    icon.textContent = '🙈';
     icon.setAttribute('aria-pressed', 'true');
   } else {
     input.type = 'password';
-    icon.textContent = '👁️';
     icon.setAttribute('aria-pressed', 'false');
   }
 }
 
 // Inicializar quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', () => {
+function _initAuth() {
   window.authManager = new AuthManager();
-});
+  console.log('[auth.js] AuthManager initialized');
+  // Abrir modais via hash (#login, #register)
+  const openFromHash = () => {
+    const h = (location.hash || '').toLowerCase();
+    if (h === '#login') window.authManager.showLoginModal();
+    if (h === '#register') window.authManager.showRegisterModal();
+  };
+  openFromHash();
+  window.addEventListener('hashchange', openFromHash);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initAuth);
+} else {
+  _initAuth();
+}
+
+// Helpers globais para abrir modais programaticamente
+window.openLoginModal = () => window.authManager && window.authManager.showLoginModal();
+window.openRegisterModal = () => window.authManager && window.authManager.showRegisterModal();

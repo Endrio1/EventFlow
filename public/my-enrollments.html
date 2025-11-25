@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minhas Inscrições - EventFlow</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=20251125-4">
   <style>
     .enrollments-page {
       max-width: 1000px;
@@ -45,7 +45,7 @@
           <li><a href="/open-events.html" class="nav-link">Eventos Abertos</a></li>
           <li><a href="/dashboard.html" class="nav-link">Dashboard</a></li>
         </ul>
-        <div id="userMenu" class="user-menu" style="display: none;">
+  <div id="userMenu" class="user-menu">
           <button class="user-avatar" id="userAvatar">
             <span id="userName">U</span>
           </button>
@@ -77,8 +77,10 @@
     </div>
   </main>
 
+  <div id="modalContainer"></div>
+
   <script src="/js/api.js"></script>
-  <script src="/js/auth.js"></script>
+  <script src="/js/auth.js?v=20251125-3"></script>
   <script src="/js/my-enrollments.js"></script>
 </body>
 </html>
