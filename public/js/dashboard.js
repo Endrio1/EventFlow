@@ -58,6 +58,32 @@ class DashboardManager {
       });
     });
 
+    // User menu
+    // Use event.stopPropagation() to avoid the global click handler closing the menu
+    const avatarBtn = document.getElementById('userAvatar');
+    const dropdown = document.getElementById('dropdownMenu');
+    if (avatarBtn) {
+      avatarBtn.addEventListener('click', (e) => {
+        try {
+          e.stopPropagation();
+        } catch (err) {
+          /* ignore */
+        }
+        // toggle and log for debugging
+        dropdown?.classList.toggle('show');
+        // small debug log (remove if not needed)
+        // console.log('User avatar clicked, dropdown visible:', dropdown?.classList.contains('show'));
+      });
+    }
+
+    // Close dropdown when clicking outside nav-right
+    document.addEventListener('click', (e) => {
+      // if click is outside nav-right, hide dropdown
+      if (!e.target.closest || !e.target.closest('.nav-right')) {
+        dropdown?.classList.remove('show');
+      }
+    });
+
     // Botões
     document.getElementById('btnCreateEvent')?.addEventListener('click', () => {
       this.showCreateForm();
@@ -96,6 +122,8 @@ class DashboardManager {
   }
 
   showSection(section) {
+    console.log('showSection chamado com:', section);
+    
     // Atualizar sidebar
     document.querySelectorAll('.sidebar-link').forEach(link => {
       link.classList.toggle('active', link.dataset.section === section);
@@ -107,6 +135,7 @@ class DashboardManager {
     });
 
     this.currentSection = section;
+    console.log('Seção atual definida como:', this.currentSection);
 
     // Carregar dados da seção
     switch (section) {
@@ -120,10 +149,16 @@ class DashboardManager {
         this.resetForm();
         break;
       case 'refunds':
-        this.loadRefunds();
+        // Carrega os dados de reembolsos
+        if (typeof window.loadRefundsData === 'function') {
+          window.loadRefundsData();
+        }
         break;
       case 'participants':
-        this.loadParticipantsSection();
+        // Carrega os dados de participantes
+        if (typeof window.loadParticipantsData === 'function') {
+          window.loadParticipantsData();
+        }
         break;
     }
   }
@@ -520,28 +555,6 @@ class DashboardManager {
       preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 300px; border-radius: var(--border-radius); box-shadow: var(--shadow);">`;
     };
     reader.readAsDataURL(file);
-  }
-
-  loadRefunds() {
-    // O script refunds.js será executado automaticamente
-    // Apenas garantir que o container existe
-    const container = document.getElementById('refundsContainer');
-    if (container && !container.dataset.loaded) {
-      container.dataset.loaded = 'true';
-      // Disparar evento customizado para recarregar refunds
-      window.dispatchEvent(new CustomEvent('loadRefunds'));
-    }
-  }
-
-  loadParticipantsSection() {
-    // O script participants.js será executado automaticamente
-    // Apenas garantir que o container existe
-    const container = document.getElementById('participantsContainer');
-    if (container && !container.dataset.loaded) {
-      container.dataset.loaded = 'true';
-      // Disparar evento customizado para recarregar participants
-      window.dispatchEvent(new CustomEvent('loadParticipants'));
-    }
   }
 }
 

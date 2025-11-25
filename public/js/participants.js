@@ -1,10 +1,13 @@
-// Módulo de Participantes para o Dashboard
-function initParticipants() {
+// Função para carregar os dados de participantes
+window.loadParticipantsData = async function() {
   const selectEvent = document.getElementById('selectEvent');
   const participantsContainer = document.getElementById('participantsContainer');
   const searchInput = document.getElementById('searchInput');
-
-  if (!selectEvent || !participantsContainer || !searchInput) return; // Elementos não existem
+  
+  if (!selectEvent || !participantsContainer) {
+    console.warn('Elementos de participantes não encontrados');
+    return;
+  }
 
   function renderParticipants(list) {
     if (!list || list.length === 0) {
@@ -34,71 +37,56 @@ function initParticipants() {
     participantsContainer.innerHTML = html;
   }
 
-  async function loadEvents() {
-    try {
-      const resp = await api.getMyEvents();
-      const events = (resp.data && (Array.isArray(resp.data) ? resp.data : resp.data.events)) || [];
-      
-      if (!events.length) {
-        selectEvent.innerHTML = '<option value="">Nenhum evento criado ainda</option>';
-        participantsContainer.innerHTML = '<div class="alert alert-info">Você ainda não criou nenhum evento.</div>';
+  try {
+    const resp = await api.getMyEvents();
+    const events = (resp.data && (Array.isArray(resp.data) ? resp.data : resp.data.events)) || [];
+    
+    if (!events.length) {
+      selectEvent.innerHTML = '<option value="">Nenhum evento criado ainda</option>';
+      participantsContainer.innerHTML = '<div class="alert alert-info">Você ainda não criou nenhum evento.</div>';
+      return;
+    }
+
+    selectEvent.innerHTML = '<option value="">Selecione um evento...</option>' + 
+      events.map(ev => `<option value="${ev.id}">${ev.title} (${ev.date || 'sem data'})</option>`).join('');
+
+    async function loadParticipants() {
+      const id = selectEvent.value;
+      if (!id) {
+        participantsContainer.innerHTML = '';
         return;
       }
-
-      selectEvent.innerHTML = '<option value="">Selecione um evento...</option>' + 
-        events.map(ev => `<option value="${ev.id}">${ev.title} (${ev.date || 'sem data'})</option>`).join('');
-
-      async function loadParticipants() {
-        const id = selectEvent.value;
-        if (!id) {
-          participantsContainer.innerHTML = '';
-          return;
-        }
-        
-        participantsContainer.innerHTML = '<div class="alert alert-info">Carregando participantes...</div>';
-        
-        try {
-          const r = await api.getEventParticipants(id);
-          const enrollments = (r.data && r.data.enrollments) || r.data || [];
-          renderParticipants(enrollments);
-        } catch (err) {
-          console.error(err);
-          participantsContainer.innerHTML = '<div class="alert alert-error">Erro ao buscar participantes.</div>';
-        }
+      
+      participantsContainer.innerHTML = '<div class="alert alert-info">Carregando participantes...</div>';
+      
+      try {
+        const r = await api.getEventParticipants(id);
+        const enrollments = (r.data && r.data.enrollments) || r.data || [];
+        renderParticipants(enrollments);
+      } catch (err) {
+        console.error(err);
+        participantsContainer.innerHTML = '<div class="alert alert-error">Erro ao buscar participantes.</div>';
       }
-
-      selectEvent.addEventListener('change', () => {
-        loadParticipants();
-      });
-
-      searchInput.addEventListener('input', () => {
-        const q = searchInput.value.toLowerCase().trim();
-        const rows = participantsContainer.querySelectorAll('tbody tr');
-        if (!rows) return;
-        rows.forEach(r => {
-          const text = r.textContent.toLowerCase();
-          r.style.display = text.includes(q) ? '' : 'none';
-        });
-      });
-
-      // Não carregar primeiro evento automaticamente - deixar o usuário escolher
-    } catch (err) {
-      console.error(err);
-      participantsContainer.innerHTML = '<div class="alert alert-error">Erro ao carregar eventos. Verifique se você está autenticado como organizador.</div>';
     }
+
+    selectEvent.addEventListener('change', () => {
+      loadParticipants();
+    });
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      const rows = participantsContainer.querySelectorAll('tbody tr');
+      if (!rows) return;
+      rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        r.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+
+    // Não carregar primeiro evento automaticamente - deixar o usuário escolher
+  } catch (err) {
+    console.error(err);
+    participantsContainer.innerHTML = '<div class="alert alert-error">Erro ao carregar eventos. Verifique se você está autenticado como organizador.</div>';
   }
-
-  // Carregar ao iniciar
-  loadEvents();
-
-  // Recarregar quando o evento customizado for disparado
-  window.addEventListener('loadParticipants', loadEvents);
-}
-
-// Inicializar quando o DOM estiver pronto
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initParticipants);
-} else {
-  initParticipants();
-}
+};
 
