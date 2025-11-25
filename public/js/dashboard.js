@@ -25,7 +25,22 @@ class DashboardManager {
 
     this.updateUserInfo();
     this.attachEventListeners();
-    this.loadOverview();
+    
+    // Verificar se há hash na URL para navegar direto para a seção
+    const hash = window.location.hash.substring(1); // Remove o #
+    if (hash && ['overview', 'events', 'create', 'refunds', 'participants'].includes(hash)) {
+      this.showSection(hash);
+    } else {
+      this.loadOverview();
+    }
+    
+    // Listener para mudanças no hash (botão voltar/avançar do navegador)
+    window.addEventListener('hashchange', () => {
+      const newHash = window.location.hash.substring(1);
+      if (newHash && ['overview', 'events', 'create', 'refunds', 'participants'].includes(newHash)) {
+        this.showSection(newHash);
+      }
+    });
   }
 
   updateUserInfo() {
@@ -46,14 +61,12 @@ class DashboardManager {
     // Navegação da sidebar
     document.querySelectorAll('.sidebar-link').forEach(link => {
       link.addEventListener('click', (e) => {
+        e.preventDefault(); // Sempre prevenir comportamento padrão
         const section = link.dataset.section;
+        console.log('Link clicado, data-section:', section, 'href:', link.getAttribute('href'));
         // If the link has a data-section attribute, treat it as an in-page navigation
         if (section) {
-          e.preventDefault();
           this.showSection(section);
-        } else {
-          // Otherwise allow the normal navigation (external/internal href)
-          // do not preventDefault so the browser will follow the href
         }
       });
     });
@@ -130,8 +143,12 @@ class DashboardManager {
     });
 
     // Atualizar conteúdo
-    document.querySelectorAll('.dashboard-section').forEach(sec => {
-      sec.classList.toggle('active', sec.id === section);
+    const sections = document.querySelectorAll('.dashboard-section');
+    console.log('Total de seções encontradas:', sections.length);
+    sections.forEach(sec => {
+      const isActive = sec.id === section;
+      console.log(`Seção ${sec.id}: ${isActive ? 'ATIVA' : 'inativa'}`);
+      sec.classList.toggle('active', isActive);
     });
 
     this.currentSection = section;

@@ -64,7 +64,7 @@
           </svg>
           <span>Criar Evento</span>
         </a>
-        <a href="/organizer/refunds.html" class="sidebar-link">
+        <a href="#" class="sidebar-link" data-section="refunds">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7"></path>
             <polyline points="7 10 12 5 17 10"></polyline>
@@ -72,7 +72,7 @@
           </svg>
           <span>Reembolsos</span>
         </a>
-        <a href="/organizer/participants.html" class="sidebar-link">
+        <a href="#" class="sidebar-link" data-section="participants">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
@@ -249,6 +249,49 @@
           </div>
         </form>
       </section>
+
+      <!-- Reembolsos -->
+      <section id="refunds" class="dashboard-section">
+        <div class="page-title-section">
+          <h1>Pedidos de Reembolso</h1>
+          <p class="page-subtitle">Gerencie solicitações de cancelamento e reembolso</p>
+        </div>
+        
+        <div id="refundsContainer" class="content-section">
+          <div class="loading-state">
+            <p>Carregando pedidos de reembolso...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Buscar Participantes -->
+      <section id="participants" class="dashboard-section">
+        <div class="page-title-section">
+          <h1>Buscar Participantes</h1>
+          <p class="page-subtitle">Pesquise e visualize participantes dos seus eventos</p>
+        </div>
+        
+        <div class="filters-section">
+          <div class="filter-group">
+            <label for="selectEvent">Evento</label>
+            <select id="selectEvent" class="input-field">
+              <option value="">Carregando eventos...</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="searchInput">Buscar</label>
+            <input 
+              type="text" 
+              id="searchInput" 
+              class="input-field" 
+              placeholder="Nome, email..."
+            >
+          </div>
+        </div>
+
+        <div id="participantsContainer" class="content-section"></div>
+      </section>
     </main>
   </div>
 
@@ -259,6 +302,8 @@
   <script src="/js/api.js"></script>
   <script src="/js/auth.js?v=20251125-3"></script>
   <script src="/js/utils.js"></script>
+  <script src="/js/refunds.js"></script>
+  <script src="/js/participants.js"></script>
   <script src="/js/dashboard.js"></script>
 </body>
 </html>
