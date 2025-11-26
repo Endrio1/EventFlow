@@ -270,25 +270,103 @@ body {
   text-align: right;
 }
 
+@media (max-width: 1024px) {
+  .stats-grid-admin {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .admin-container {
     grid-template-columns: 1fr;
+    padding: 1.5rem;
   }
   
   .admin-header h1 {
-    font-size: 1.4rem;
+    font-size: 1.75rem;
+  }
+  
+  .admin-header p {
+    font-size: 0.95rem;
+  }
+  
+  .stats-grid-admin {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
   .filters-row {
     flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .filters-row .input-field {
+    width: 100%;
+    font-size: 16px;
   }
   
   .table-wrap {
     margin: 0 -1rem;
     padding: 0 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .admin-table {
+    min-width: 600px;
+    font-size: 0.85rem;
+  }
+  
+  .admin-table th,
+  .admin-table td {
+    padding: 0.75rem 0.5rem;
   }
   
   .admin-section {
     padding: 1.5rem;
+  }
+  
+  .user-info h4 {
+    font-size: 0.95rem;
+  }
+  
+  .user-info p {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-container {
+    padding: 1rem;
+  }
+  
+  .admin-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .stat-card-admin {
+    padding: 1.25rem;
+  }
+  
+  .stat-card-admin h3 {
+    font-size: 2rem;
+  }
+  
+  .stat-card-admin p {
+    font-size: 0.95rem;
+  }
+  
+  .admin-table {
+    font-size: 0.8rem;
+  }
+  
+  .admin-section {
+    padding: 1rem;
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
   }
 }

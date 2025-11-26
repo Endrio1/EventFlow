@@ -154,7 +154,39 @@
   padding: 0 24px;
 }
 
+@media (max-width: 1024px) {
+  .enrollment-card {
+    grid-template-columns: 1fr;
+  }
+  
+  .enrollment-actions {
+    border-left: none;
+    border-top: 1px solid #e2e8f0;
+    padding-left: 0;
+    padding-top: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
+  .page-hero {
+    padding: 1rem 0;
+  }
+  
+  .page-hero .container,
+  .page-hero .nav-container,
+  .page-hero-content {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  
+  .enrollments-page {
+    padding: 24px 16px;
+  }
+  
+  #alerts {
+    padding: 0 16px;
+  }
+  
   .page-hero-content h1 {
     font-size: 1.5rem;
   }
@@ -165,18 +197,73 @@
   
   .enrollment-card {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+  
+  .enrollment-info h3 {
+    font-size: 1.25rem;
+  }
+  
+  .enrollment-detail {
+    font-size: 0.85rem;
   }
   
   .enrollment-actions {
     align-items: stretch;
+    border-left: none;
+    border-top: 1px solid #e2e8f0;
+    padding-left: 0;
+    padding-top: 1.25rem;
+    margin-top: 0.5rem;
   }
   
   .enrollment-buttons {
     justify-content: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
   }
   
   .enrollment-buttons button {
     flex: 1;
+    width: 100%;
+  }
+  
+  .empty-state h3 {
+    font-size: 1.25rem;
+  }
+  
+  .empty-state p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-hero .container,
+  .page-hero .nav-container,
+  .page-hero-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .enrollments-page {
+    padding: 16px;
+  }
+  
+  #alerts {
+    padding: 0 16px;
+  }
+  
+  .page-hero-content h1 {
+    font-size: 1.35rem;
+  }
+  
+  .enrollment-card {
+    padding: 1rem;
+  }
+  
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.75rem;
   }
 }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EventFlow - Gerenciamento de Eventos</title>
   <!-- Cache busting: increment v param se estilos não atualizarem -->
-  <link rel="stylesheet" href="/css/style.css?v=20251125-4">
+  <link rel="stylesheet" href="/css/style.css?v=20251126-1">
   <link rel="stylesheet" href="/css/about-footer.css?v=1">
   <!-- Fallback removido após extração; usar DevTools se precisar diagnosticar -->
 </head>
@@ -117,6 +117,13 @@
           <div class="spinner"></div>
           <p>Carregando eventos...</p>
         </div>
+      </div>
+      
+      <div class="scroll-indicator" id="scrollIndicator">
+        <span>Deslize para ver mais</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
       </div>
 
       <div id="pagination" class="pagination"></div>
