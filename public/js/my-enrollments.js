@@ -171,7 +171,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           // update card if present
           const mapEntry = window.__enrollmentCardMap && window.__enrollmentCardMap.get(event.id);
           if (mapEntry) {
-            mapEntry.status.innerHTML = '<span style="color:var(--error-color)">✗ Cancelado</span>';
+            mapEntry.status.className = 'enrollment-status status-cancelled';
+            mapEntry.status.textContent = '✗ Cancelado';
             mapEntry.cancelBtn.disabled = true;
           }
           overlay.remove();
@@ -195,7 +196,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const enrollments = res.data || [];
 
     if (!enrollments.length) {
-      container.innerHTML = '<p class="empty-state">Você ainda não se inscreveu em nenhum evento.</p>';
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <h2>Nenhuma inscrição encontrada</h2>
+          <p>Você ainda não se inscreveu em nenhum evento.</p>
+          <a href="/open-events.html" class="btn btn-primary">Explorar Eventos</a>
+        </div>
+      `;
       return;
     }
 
@@ -214,27 +227,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const info = document.createElement('div');
       info.className = 'enrollment-info';
+      
       const title = document.createElement('h3');
       title.textContent = event.title || 'Evento sem título';
-      const dateP = document.createElement('p');
+      
+      const dateDiv = document.createElement('div');
+      dateDiv.className = 'event-date';
       const date = event.date ? new Date(event.date).toLocaleDateString('pt-BR') : '';
-      dateP.textContent = date + (event.time ? ' · ' + event.time : '');
+      dateDiv.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span>${date}${event.time ? ' às ' + event.time : ''}</span>
+      `;
+      
+      const locationDiv = document.createElement('div');
+      locationDiv.className = 'event-location';
+      if (event.location || (event.endereco && event.endereco.rua)) {
+        locationDiv.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span>${event.location || event.endereco.rua}</span>
+        `;
+      }
 
       info.appendChild(title);
-      info.appendChild(dateP);
+      info.appendChild(dateDiv);
+      if (event.location || (event.endereco && event.endereco.rua)) {
+        info.appendChild(locationDiv);
+      }
 
-      const right = document.createElement('div');
-      right.style.display = 'flex';
-      right.style.gap = '8px';
-      right.style.alignItems = 'center';
+      const actions = document.createElement('div');
+      actions.className = 'enrollment-actions';
 
       const status = document.createElement('div');
-      status.className = 'enrollment-status';
-      status.innerHTML = enrollment.status === 'confirmed' ? '<span style="color:var(--success-color)">✓ Confirmado</span>' : '<span style="color:var(--error-color)">✗ Cancelado</span>';
+      status.className = `enrollment-status ${enrollment.status === 'confirmed' ? 'status-confirmed' : 'status-cancelled'}`;
+      status.textContent = enrollment.status === 'confirmed' ? '✓ Confirmado' : '✗ Cancelado';
 
-  const viewBtn = document.createElement('button');
-  // adicionar classe específica para permitir customizar cor sem afetar outros botões
-  viewBtn.className = 'btn btn-outline btn-event-view';
+      const buttonsDiv = document.createElement('div');
+      buttonsDiv.className = 'enrollment-buttons';
+
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn btn-primary btn-event-view';
       viewBtn.textContent = 'Ver Evento';
       viewBtn.type = 'button';
       viewBtn.addEventListener('click', () => openEventModal(event, enrollment, card));
@@ -253,7 +292,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           cancelBtn.disabled = true;
           const resp = await api.cancelEnrollment(event.id);
           // Atualiza status visual
-          status.innerHTML = '<span style="color:var(--error-color)">✗ Cancelado</span>';
+          status.className = 'enrollment-status status-cancelled';
+          status.textContent = '✗ Cancelado';
           showAlert(resp.message || 'Inscrição cancelada com sucesso', 'success');
         } catch (err) {
           console.error('Erro ao cancelar inscrição', err);
@@ -262,12 +302,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
-      right.appendChild(status);
-      right.appendChild(viewBtn);
-      right.appendChild(cancelBtn);
+      buttonsDiv.appendChild(viewBtn);
+      buttonsDiv.appendChild(cancelBtn);
+      
+      actions.appendChild(status);
+      actions.appendChild(buttonsDiv);
 
       card.appendChild(info);
-      card.appendChild(right);
+      card.appendChild(actions);
 
       list.appendChild(card);
       cardMap.set(event.id, { card, status, cancelBtn, enrollment });

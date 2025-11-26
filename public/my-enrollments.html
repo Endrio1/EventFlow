@@ -5,31 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minhas Inscrições - EventFlow</title>
   <link rel="stylesheet" href="/css/style.css?v=20251125-4">
-  <style>
-    .enrollments-page {
-      max-width: 1000px;
-      margin: 48px auto;
-      padding: 24px;
-    }
-    .enrollment-card {
-      background: var(--white);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .enrollment-info h3 { margin: 0 0 6px 0; }
-    .empty-state { text-align: center; color: var(--secondary-color); padding: 48px 0; }
-    .top-actions { display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; }
-  </style>
+  <link rel="stylesheet" href="/css/my-enrollments.css">
 </head>
 <body>
-  <!-- Header with navigation -->
-  <header class="hero-section">
+  <!-- Header compacto com título da página -->
+  <header class="page-hero">
     <nav class="navbar">
       <div class="container nav-container">
         <div class="logo">
@@ -40,7 +20,7 @@
           <span></span>
           <span></span>
         </button>
-  <div id="userMenu" class="user-menu">
+        <div id="userMenu" class="user-menu">
           <button class="user-avatar" id="userAvatar">
             <span id="userName">U</span>
           </button>
@@ -53,14 +33,28 @@
             <a href="#" id="logoutBtn">Sair</a>
           </div>
         </div>
-
-
-  <main class="enrollments-page container">
-    <div class="top-actions">
+      </div>
+    </nav>
+    
+    <div class="page-hero-content container">
       <h1>Minhas Inscrições</h1>
+      <p>Gerencie suas inscrições em eventos e acompanhe seu status</p>
     </div>
+  </header>
+
+  <div id="alerts"></div>
+
+  <main class="enrollments-page">
     <div id="enrollmentsContainer">
-      <p class="empty-state">Carregando suas inscrições...</p>
+      <p class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        Carregando suas inscrições...
+      </p>
     </div>
   </main>
 
