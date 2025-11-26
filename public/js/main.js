@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }, observerOptions);
 
-  document.querySelectorAll('.event-card, .stat-card, .feature-list li').forEach(el => {
+  document.querySelectorAll('.event-card, .testimonial-card-fixed, .feature-list li').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(20px)';
     el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';

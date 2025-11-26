@@ -68,6 +68,72 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+  padding-top: 12rem;
+}
+
+.testimonial-card-fixed {
+  min-width: 200px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: var(--white);
+  padding: 1.3rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 400px;
+}
+
+.testimonial-card-fixed:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.35);
+}
+
+.testimonial-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
+}
+
+.testimonial-icon svg {
+  opacity: 0.95;
+}
+
+.testimonial-text {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  font-style: italic;
+  opacity: 0.95;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.testimonial-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.testimonial-author-info strong {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.testimonial-author-info span {
+  font-size: 0.9rem;
+  opacity: 0.85;
 }
 
 .stat-card {
@@ -188,5 +254,34 @@
 }
 
 /* Responsive */
-@media (max-width: 900px) { .about-content { grid-template-columns: 1fr; } .about-stats { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 480px) { .about-stats { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { 
+  .about-content { 
+    grid-template-columns: 1fr; 
+  }
+  
+  .about-stats {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) { 
+  .testimonial-card-fixed {
+    padding: 2rem;
+    min-height: 240px;
+  }
+  
+  .testimonial-text {
+    font-size: 0.95rem;
+  }
+  
+  .testimonial-icon {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .testimonial-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+}
