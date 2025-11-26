@@ -459,9 +459,7 @@ html, body {
 }
 
 /* Events Section */
-.events-section {
-  padding: 3rem 0;
-}
+
 
 .section-header {
   text-align: center;
@@ -485,6 +483,265 @@ html, body {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
   position: relative;
+}
+
+/* Grid filtrado (quando seleciona categoria) */
+.events-grid-filtered {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+/* ========================================
+   CARROSSÉIS POR CATEGORIA
+   ======================================== */
+
+.events-carousels-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.carousels-page .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+/* Cada carrossel de categoria */
+.category-carousel {
+  position: relative;
+}
+
+.carousel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding: 0 0.5rem;
+}
+
+.carousel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.carousel-title h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.carousel-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.carousel-icon svg {
+  stroke: white;
+}
+
+.event-count {
+  background: var(--background-color);
+  color: var(--secondary-color);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Controles do carrossel */
+.carousel-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.carousel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  background: var(--white);
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.carousel-btn:hover:not(:disabled) {
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+.carousel-btn:hover:not(:disabled) svg {
+  stroke: var(--white);
+}
+
+.carousel-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--secondary-color);
+}
+
+.carousel-btn svg {
+  stroke: var(--primary-color);
+  transition: var(--transition);
+}
+
+/* Wrapper e track do carrossel */
+.carousel-wrapper {
+  overflow: hidden;
+  position: relative;
+  margin: 0 -0.5rem;
+  padding: 0 0.5rem;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 1.5rem;
+  transition: transform 0.4s ease;
+  padding: 0.5rem 0;
+}
+
+.carousel-track .event-card {
+  flex: 0 0 calc(25% - 1.125rem);
+  min-width: 280px;
+  max-width: 340px;
+}
+
+/* Dots de navegação */
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: #E2E8F0;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0;
+}
+
+.carousel-dot:hover {
+  background: var(--secondary-color);
+}
+
+.carousel-dot.active {
+  background: var(--primary-color);
+  width: 28px;
+  border-radius: 5px;
+}
+
+/* Mensagem de nenhum evento */
+.no-events-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--secondary-color);
+}
+
+.no-events-message svg {
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.no-events-message h3 {
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.no-events-message.error svg {
+  stroke: var(--error-color);
+}
+
+.no-events-message.error h3 {
+  color: var(--error-color);
+}
+
+/* Responsividade dos carrosséis */
+@media (max-width: 1200px) {
+  .carousel-track .event-card {
+    flex: 0 0 calc(33.333% - 1rem);
+  }
+}
+
+@media (max-width: 900px) {
+  .carousel-track .event-card {
+    flex: 0 0 calc(50% - 0.75rem);
+  }
+  
+  .carousel-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .carousel-title h3 {
+    font-size: 1.15rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .carousel-track .event-card {
+    flex: 0 0 calc(100% - 1rem);
+    min-width: 260px;
+  }
+  
+  .carousel-controls {
+    display: none;
+  }
+  
+  .carousel-title {
+    flex-wrap: wrap;
+  }
+  
+  .carousel-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .carousel-wrapper {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .carousel-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .carousel-track {
+    scroll-snap-align: start;
+  }
+  
+  .carousel-track .event-card {
+    scroll-snap-align: center;
+  }
+  
+  .events-carousels-container {
+    gap: 2rem;
+  }
 }
 
 /* Scroll indicator for mobile carousel */
@@ -718,6 +975,29 @@ html, body {
   height: 16px;
   stroke: var(--primary-color);
   flex-shrink: 0;
+}
+
+/* Endereço completo no modal de detalhes */
+.event-address-full {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e8f0fe 100%);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
+  margin-top: 0.5rem;
+}
+
+.event-address-full > span {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.5;
+}
+
+.event-address-full svg {
+  margin-top: 2px;
 }
 
 .event-capacity {

@@ -80,6 +80,13 @@
           </svg>
           <span>Buscar Participantes</span>
         </a>
+        <a href="#" class="sidebar-link" data-section="addresses">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span>Endereços</span>
+        </a>
       </nav>
     </aside>
 
@@ -214,7 +221,95 @@
 
           <div class="form-group">
             <label for="eventLocation">Local *</label>
-            <input type="text" id="eventLocation" class="input-field" required>
+            <input type="text" id="eventLocation" class="input-field" required placeholder="Nome do local (ex: Centro de Convenções)">
+          </div>
+
+          <!-- Seleção de Endereço -->
+          <div class="form-group">
+            <label for="eventAddress">Endereço</label>
+            <div class="address-select-wrapper">
+              <select id="eventAddress" class="input-field">
+                <option value="">Selecionar endereço cadastrado...</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnNewAddressInline" title="Criar novo endereço">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+            <small class="form-hint">Selecione um endereço já cadastrado ou crie um novo</small>
+          </div>
+
+          <!-- Campos de novo endereço inline (ocultos por padrão) -->
+          <div id="inlineAddressFields" class="inline-address-fields hidden">
+            <div class="inline-address-header">
+              <h4>Novo Endereço</h4>
+              <button type="button" class="btn-close" id="btnCloseInlineAddress">&times;</button>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inlineCep">CEP</label>
+                <input type="text" id="inlineCep" class="input-field" placeholder="00000-000" maxlength="9">
+              </div>
+              <div class="form-group form-group-grow">
+                <label for="inlineRua">Rua *</label>
+                <input type="text" id="inlineRua" class="input-field">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inlineNumero">Número *</label>
+                <input type="text" id="inlineNumero" class="input-field">
+              </div>
+              <div class="form-group form-group-grow">
+                <label for="inlineComplemento">Complemento</label>
+                <input type="text" id="inlineComplemento" class="input-field">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inlineBairro">Bairro *</label>
+                <input type="text" id="inlineBairro" class="input-field">
+              </div>
+              <div class="form-group">
+                <label for="inlineCidade">Cidade *</label>
+                <input type="text" id="inlineCidade" class="input-field">
+              </div>
+              <div class="form-group">
+                <label for="inlineEstado">Estado *</label>
+                <select id="inlineEstado" class="input-field">
+                  <option value="">UF</option>
+                  <option value="AC">AC</option>
+                  <option value="AL">AL</option>
+                  <option value="AP">AP</option>
+                  <option value="AM">AM</option>
+                  <option value="BA">BA</option>
+                  <option value="CE">CE</option>
+                  <option value="DF">DF</option>
+                  <option value="ES">ES</option>
+                  <option value="GO">GO</option>
+                  <option value="MA">MA</option>
+                  <option value="MT">MT</option>
+                  <option value="MS">MS</option>
+                  <option value="MG">MG</option>
+                  <option value="PA">PA</option>
+                  <option value="PB">PB</option>
+                  <option value="PR">PR</option>
+                  <option value="PE">PE</option>
+                  <option value="PI">PI</option>
+                  <option value="RJ">RJ</option>
+                  <option value="RN">RN</option>
+                  <option value="RS">RS</option>
+                  <option value="RO">RO</option>
+                  <option value="RR">RR</option>
+                  <option value="SC">SC</option>
+                  <option value="SP">SP</option>
+                  <option value="SE">SE</option>
+                  <option value="TO">TO</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <div class="form-row">
@@ -291,6 +386,107 @@
         </div>
 
         <div id="participantsContainer" class="content-section"></div>
+      </section>
+
+      <!-- Gerenciar Endereços -->
+      <section id="addresses" class="dashboard-section">
+        <div class="section-header-dashboard">
+          <h1>Gerenciar Endereços</h1>
+          <button class="btn btn-primary" id="btnCreateAddress">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Novo Endereço
+          </button>
+        </div>
+
+        <div id="addressesList" class="addresses-list">
+          <div class="loading-state">
+            <p>Carregando endereços...</p>
+          </div>
+        </div>
+
+        <!-- Formulário de Endereço (oculto por padrão) -->
+        <div id="addressFormContainer" class="address-form-container" style="display: none;">
+          <h2 id="addressFormTitle">Novo Endereço</h2>
+          <form id="addressForm" class="event-form">
+            <input type="hidden" id="addressId">
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="addressCep">CEP</label>
+                <input type="text" id="addressCep" class="input-field" placeholder="00000-000" maxlength="9">
+              </div>
+              <div class="form-group" style="flex: 2;">
+                <label for="addressRua">Rua/Logradouro *</label>
+                <input type="text" id="addressRua" class="input-field" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="addressNumero">Número *</label>
+                <input type="text" id="addressNumero" class="input-field" required>
+              </div>
+              <div class="form-group" style="flex: 2;">
+                <label for="addressComplemento">Complemento</label>
+                <input type="text" id="addressComplemento" class="input-field" placeholder="Apto, Sala, Bloco...">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="addressBairro">Bairro *</label>
+                <input type="text" id="addressBairro" class="input-field" required>
+              </div>
+              <div class="form-group">
+                <label for="addressCidade">Cidade *</label>
+                <input type="text" id="addressCidade" class="input-field" required>
+              </div>
+              <div class="form-group">
+                <label for="addressEstado">Estado *</label>
+                <select id="addressEstado" class="input-field" required>
+                  <option value="">Selecione...</option>
+                  <option value="AC">Acre</option>
+                  <option value="AL">Alagoas</option>
+                  <option value="AP">Amapá</option>
+                  <option value="AM">Amazonas</option>
+                  <option value="BA">Bahia</option>
+                  <option value="CE">Ceará</option>
+                  <option value="DF">Distrito Federal</option>
+                  <option value="ES">Espírito Santo</option>
+                  <option value="GO">Goiás</option>
+                  <option value="MA">Maranhão</option>
+                  <option value="MT">Mato Grosso</option>
+                  <option value="MS">Mato Grosso do Sul</option>
+                  <option value="MG">Minas Gerais</option>
+                  <option value="PA">Pará</option>
+                  <option value="PB">Paraíba</option>
+                  <option value="PR">Paraná</option>
+                  <option value="PE">Pernambuco</option>
+                  <option value="PI">Piauí</option>
+                  <option value="RJ">Rio de Janeiro</option>
+                  <option value="RN">Rio Grande do Norte</option>
+                  <option value="RS">Rio Grande do Sul</option>
+                  <option value="RO">Rondônia</option>
+                  <option value="RR">Roraima</option>
+                  <option value="SC">Santa Catarina</option>
+                  <option value="SP">São Paulo</option>
+                  <option value="SE">Sergipe</option>
+                  <option value="TO">Tocantins</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="addressFormError"></div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="btnCancelAddress">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Salvar Endereço</button>
+            </div>
+          </form>
+        </div>
       </section>
     </main>
   </div>

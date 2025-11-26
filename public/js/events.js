@@ -226,6 +226,39 @@ class EventsManager {
         </div>
       ` : '';
 
+      // Formatar endereço completo
+      const formatFullAddress = (endereco) => {
+        if (!endereco) return null;
+        const parts = [];
+        if (endereco.rua) {
+          let street = endereco.rua;
+          if (endereco.numero) street += `, ${endereco.numero}`;
+          if (endereco.complemento) street += ` - ${endereco.complemento}`;
+          parts.push(street);
+        }
+        if (endereco.bairro) parts.push(endereco.bairro);
+        if (endereco.cidade && endereco.estado) {
+          parts.push(`${endereco.cidade}/${endereco.estado}`);
+        } else if (endereco.cidade) {
+          parts.push(endereco.cidade);
+        }
+        if (endereco.cep) parts.push(`CEP: ${endereco.cep}`);
+        return parts.length > 0 ? parts.join(' • ') : null;
+      };
+
+      const fullAddress = formatFullAddress(event.endereco);
+      
+      // HTML do endereço completo
+      const addressHtml = fullAddress ? `
+        <div class="event-detail-item event-address-full">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span><strong>Endereço:</strong> ${fullAddress}</span>
+        </div>
+      ` : '';
+
       const content = `
         ${imageUrl ? `<img src="${imageUrl}" alt="${event.title}" style="width: 100%; height: 250px; object-fit: cover; border-radius: var(--border-radius); margin-bottom: 1.5rem;">` : ''}
         
@@ -253,6 +286,7 @@ class EventsManager {
             </svg>
             <span><strong>Local:</strong> ${event.location}</span>
           </div>
+          ${addressHtml}
           <div class="event-detail-item">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>

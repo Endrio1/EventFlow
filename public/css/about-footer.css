@@ -4,7 +4,7 @@
 /* About Section */
 .about-section {
   background: linear-gradient(180deg, #f6f8fc 0%, #ffffff 60%);
-  padding: 5rem 0;
+  padding-bottom: 5rem;
 }
 
 .about-content {

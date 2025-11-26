@@ -1,4 +1,4 @@
-const { Event, User, Enrollment } = require('../models');
+const { Event, User, Enrollment, Endereco } = require('../models');
 const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
@@ -41,11 +41,18 @@ class EventController {
 
       const { count, rows: events } = await Event.findAndCountAll({
         where,
-        include: [{
-          model: User,
-          as: 'organizer',
-          attributes: ['id', 'name', 'email']
-        }],
+        include: [
+          {
+            model: User,
+            as: 'organizer',
+            attributes: ['id', 'name', 'email']
+          },
+          {
+            model: Endereco,
+            as: 'endereco',
+            required: false
+          }
+        ],
         order: [[sortBy, order.toUpperCase()]],
         limit: parseInt(limit),
         offset: parseInt(offset)
@@ -88,6 +95,11 @@ class EventController {
               attributes: ['status', 'enrollment_date'],
               where: { status: 'confirmed' }
             }
+          },
+          {
+            model: Endereco,
+            as: 'endereco',
+            required: false
           }
         ]
       });
@@ -135,7 +147,7 @@ class EventController {
         }
       }
 
-      const { title, description, category, location, date, time, capacity } = req.body;
+      const { title, description, category, location, date, time, capacity, endereco_id } = req.body;
 
       // Validações básicas
       if (!title || !description || !category || !location || !date || !time || !capacity) {
@@ -155,7 +167,8 @@ class EventController {
         time,
         capacity: parseInt(capacity),
         image: req.file ? `/uploads/events/${req.file.filename}` : null,
-        organizer_id: req.userId
+        organizer_id: req.userId,
+        endereco_id: endereco_id ? parseInt(endereco_id) : null
       });
 
       return res.status(201).json({
@@ -199,7 +212,7 @@ class EventController {
           console.log('[EVENT][UPDATE] file= null');
         }
       }
-      const { title, description, category, location, date, time, capacity, status } = req.body;
+      const { title, description, category, location, date, time, capacity, status, endereco_id } = req.body;
 
       const event = await Event.findByPk(id);
 
@@ -229,6 +242,7 @@ class EventController {
       if (time) event.time = time;
       if (capacity) event.capacity = parseInt(capacity);
       if (status) event.status = status;
+      if (endereco_id !== undefined) event.endereco_id = endereco_id ? parseInt(endereco_id) : null;
 
       // Atualizar imagem se nova foi enviada
       if (req.file) {
@@ -301,14 +315,21 @@ class EventController {
     try {
       const events = await Event.findAll({
         where: { organizer_id: req.userId },
-        include: [{
-          model: User,
-          as: 'participants',
-          attributes: ['id', 'name', 'email'],
-          through: {
-            attributes: ['id', 'status', 'enrollment_date']
+        include: [
+          {
+            model: User,
+            as: 'participants',
+            attributes: ['id', 'name', 'email'],
+            through: {
+              attributes: ['id', 'status', 'enrollment_date']
+            }
+          },
+          {
+            model: Endereco,
+            as: 'endereco',
+            required: false
           }
-        }],
+        ],
         order: [['date', 'ASC']]
       });
 

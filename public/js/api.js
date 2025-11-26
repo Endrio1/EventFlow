@@ -269,6 +269,35 @@ class API {
   async refundEnrollment(enrollmentId) {
     return this.request(`/enrollments/${enrollmentId}/refund`, { method: 'PATCH', auth: true });
   }
+
+  // Endereços
+  async getAddresses() {
+    return this.get('/addresses', true);
+  }
+
+  async getAllAddresses() {
+    return this.get('/addresses/all', true);
+  }
+
+  async getAddress(id) {
+    return this.get(`/addresses/${id}`, true);
+  }
+
+  async createAddress(data) {
+    return this.post('/addresses', data, true);
+  }
+
+  async updateAddress(id, data) {
+    return this.put(`/addresses/${id}`, data, true);
+  }
+
+  async deleteAddress(id) {
+    return this.delete(`/addresses/${id}`, true);
+  }
+
+  async findOrCreateAddress(data) {
+    return this.post('/addresses/find-or-create', data);
+  }
 }
 
 // Exportar instância da API

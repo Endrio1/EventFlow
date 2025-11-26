@@ -102,6 +102,15 @@ const Event = sequelize.define('Event', {
       model: 'usuarios',
       key: 'id'
     }
+  },
+  endereco_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'endereco_id',
+    references: {
+      model: 'enderecos',
+      key: 'id'
+    }
   }
 }, {
   tableName: 'eventos'

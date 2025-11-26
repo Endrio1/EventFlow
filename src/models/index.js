@@ -20,6 +20,10 @@ Event.belongsTo(User, {
 User.belongsTo(Endereco, { foreignKey: 'endereco_id', as: 'endereco' });
 Endereco.hasMany(User, { foreignKey: 'endereco_id', as: 'users' });
 
+// Evento pode ter um endereço (nullable)
+Event.belongsTo(Endereco, { foreignKey: 'endereco_id', as: 'endereco' });
+Endereco.hasMany(Event, { foreignKey: 'endereco_id', as: 'events' });
+
 User.belongsToMany(Event, {
   through: Enrollment,
   foreignKey: 'user_id',

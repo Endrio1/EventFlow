@@ -77,19 +77,20 @@
     </div>
   </section>
 
-  <section class="events-section">
+  <section class="events-section carousels-page">
     <div class="container">
       <div class="section-header">
         <h2>Eventos Abertos</h2>
         <p>Participe dos eventos com vagas disponíveis e vendas abertas.</p>
       </div>
 
-      <div id="eventsGrid" class="events-grid">
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <p>Carregando eventos...</p>
-        </div>
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Carregando eventos...</p>
       </div>
+
+      <div id="eventsContainer" class="events-carousels-container"></div>
+      <div id="eventsGrid" class="events-grid hidden"></div>
 
       <div id="pagination" class="pagination"></div>
     </div>

@@ -3,7 +3,9 @@ class DashboardManager {
   constructor() {
     this.currentSection = 'overview';
     this.events = [];
+    this.addresses = [];
     this.editingEventId = null;
+    this.editingAddressId = null;
     this.init();
   }
 
@@ -26,9 +28,12 @@ class DashboardManager {
     this.updateUserInfo();
     this.attachEventListeners();
     
+    // Carregar endereços para uso no formulário de eventos
+    await this.loadAddressesForSelect();
+    
     // Verificar se há hash na URL para navegar direto para a seção
     const hash = window.location.hash.substring(1); // Remove o #
-    if (hash && ['overview', 'events', 'create', 'refunds', 'participants'].includes(hash)) {
+    if (hash && ['overview', 'events', 'create', 'refunds', 'participants', 'addresses'].includes(hash)) {
       this.showSection(hash);
     } else {
       this.loadOverview();
@@ -37,7 +42,7 @@ class DashboardManager {
     // Listener para mudanças no hash (botão voltar/avançar do navegador)
     window.addEventListener('hashchange', () => {
       const newHash = window.location.hash.substring(1);
-      if (newHash && ['overview', 'events', 'create', 'refunds', 'participants'].includes(newHash)) {
+      if (newHash && ['overview', 'events', 'create', 'refunds', 'participants', 'addresses'].includes(newHash)) {
         this.showSection(newHash);
       }
     });
@@ -132,6 +137,38 @@ class DashboardManager {
     if (dateInput) {
       dateInput.min = today;
     }
+
+    // Event listeners para endereços
+    document.getElementById('btnCreateAddress')?.addEventListener('click', () => {
+      this.showAddressForm();
+    });
+
+    document.getElementById('addressForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.handleAddressSubmit();
+    });
+
+    document.getElementById('btnCancelAddress')?.addEventListener('click', () => {
+      this.hideAddressForm();
+    });
+
+    // CEP auto-complete para formulário de endereços
+    document.getElementById('addressCep')?.addEventListener('blur', (e) => {
+      this.fetchAddressByCep(e.target.value, 'address');
+    });
+
+    // Inline address fields no formulário de evento
+    document.getElementById('btnNewAddressInline')?.addEventListener('click', () => {
+      this.toggleInlineAddressFields(true);
+    });
+
+    document.getElementById('btnCloseInlineAddress')?.addEventListener('click', () => {
+      this.toggleInlineAddressFields(false);
+    });
+
+    document.getElementById('inlineCep')?.addEventListener('blur', (e) => {
+      this.fetchAddressByCep(e.target.value, 'inline');
+    });
   }
 
   showSection(section) {
@@ -176,6 +213,9 @@ class DashboardManager {
         if (typeof window.loadParticipantsData === 'function') {
           window.loadParticipantsData();
         }
+        break;
+      case 'addresses':
+        this.loadAddresses();
         break;
     }
   }
@@ -321,7 +361,7 @@ class DashboardManager {
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
               <circle cx="12" cy="10" r="3"></circle>
             </svg>
-            <span>${event.location}</span>
+            <span>${event.location}${event.endereco ? ` - ${event.endereco.cidade}/${event.endereco.estado}` : ''}</span>
           </div>
         </div>
 
@@ -435,6 +475,11 @@ class DashboardManager {
     document.getElementById('eventDate').value = event.date.split('T')[0];
     document.getElementById('eventTime').value = event.time;
     document.getElementById('eventCapacity').value = event.capacity;
+    
+    // Preencher endereço se existir
+    if (event.endereco_id) {
+      document.getElementById('eventAddress').value = event.endereco_id;
+    }
 
     // Mostrar preview da imagem atual
     if (event.image) {
@@ -448,6 +493,26 @@ class DashboardManager {
     formError.innerHTML = '';
 
     try {
+      // Verificar se há endereço inline para criar
+      const inlineFields = document.getElementById('inlineAddressFields');
+      let enderecoId = document.getElementById('eventAddress').value;
+      
+      if (inlineFields && !inlineFields.classList.contains('hidden')) {
+        // Criar endereço inline
+        const inlineRua = document.getElementById('inlineRua').value.trim();
+        if (inlineRua) {
+          try {
+            const newAddress = await this.createInlineAddress();
+            enderecoId = newAddress.id;
+            // Atualizar lista de endereços
+            await this.loadAddressesForSelect();
+          } catch (addrError) {
+            formError.innerHTML = `<div class="alert alert-error">${addrError.message}</div>`;
+            return;
+          }
+        }
+      }
+
       const formData = new FormData();
       formData.append('title', document.getElementById('eventTitle').value);
       formData.append('category', document.getElementById('eventCategory').value);
@@ -456,6 +521,11 @@ class DashboardManager {
       formData.append('date', document.getElementById('eventDate').value);
       formData.append('time', document.getElementById('eventTime').value);
       formData.append('capacity', document.getElementById('eventCapacity').value);
+      
+      // Adicionar endereço se selecionado
+      if (enderecoId) {
+        formData.append('endereco_id', enderecoId);
+      }
 
       const imageFile = document.getElementById('eventImage').files[0];
       if (imageFile) {
@@ -473,6 +543,9 @@ class DashboardManager {
         await api.createEvent(formData);
         formError.innerHTML = '<div class="alert alert-success">Evento criado com sucesso!</div>';
       }
+
+      // Esconder campos inline se estavam abertos
+      this.toggleInlineAddressFields(false);
 
       setTimeout(() => {
         this.showSection('events');
@@ -556,6 +629,8 @@ class DashboardManager {
     document.getElementById('eventId').value = '';
     document.getElementById('imagePreview').innerHTML = '';
     document.getElementById('formError').innerHTML = '';
+    document.getElementById('eventAddress').value = '';
+    this.toggleInlineAddressFields(false);
     this.editingEventId = null;
   }
 
@@ -572,6 +647,305 @@ class DashboardManager {
       preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 300px; border-radius: var(--border-radius); box-shadow: var(--shadow);">`;
     };
     reader.readAsDataURL(file);
+  }
+
+  // ========================
+  // Address Management Methods
+  // ========================
+
+  async loadAddresses() {
+    const container = document.getElementById('addressesList');
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading-state"><p>Carregando endereços...</p></div>';
+
+    try {
+      const response = await api.getAllAddresses();
+      this.addresses = response.data || [];
+      this.renderAddresses();
+    } catch (error) {
+      console.error('Erro ao carregar endereços:', error);
+      container.innerHTML = '<div class="alert alert-error">Erro ao carregar endereços.</div>';
+    }
+  }
+
+  async loadAddressesForSelect() {
+    try {
+      const response = await api.getAllAddresses();
+      this.addresses = response.data || [];
+      this.updateAddressSelect();
+    } catch (error) {
+      console.error('Erro ao carregar endereços para seleção:', error);
+    }
+  }
+
+  updateAddressSelect() {
+    const select = document.getElementById('eventAddress');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Selecionar endereço cadastrado...</option>';
+    
+    this.addresses.forEach(addr => {
+      const label = this.formatAddressLabel(addr);
+      const option = document.createElement('option');
+      option.value = addr.id;
+      option.textContent = label;
+      select.appendChild(option);
+    });
+  }
+
+  formatAddressLabel(addr) {
+    const parts = [];
+    if (addr.rua) parts.push(addr.rua);
+    if (addr.numero) parts.push(addr.numero);
+    if (addr.bairro) parts.push(`- ${addr.bairro}`);
+    if (addr.cidade) parts.push(`- ${addr.cidade}`);
+    if (addr.estado) parts.push(`/${addr.estado}`);
+    return parts.join(' ') || 'Endereço sem descrição';
+  }
+
+  formatAddressFull(addr) {
+    const parts = [];
+    if (addr.rua) {
+      let line = addr.rua;
+      if (addr.numero) line += `, ${addr.numero}`;
+      if (addr.complemento) line += ` - ${addr.complemento}`;
+      parts.push(line);
+    }
+    if (addr.bairro) parts.push(addr.bairro);
+    
+    const cityState = [];
+    if (addr.cidade) cityState.push(addr.cidade);
+    if (addr.estado) cityState.push(addr.estado);
+    if (cityState.length) parts.push(cityState.join('/'));
+    
+    if (addr.cep) parts.push(`CEP: ${addr.cep}`);
+    
+    return parts.join('<br>');
+  }
+
+  renderAddresses() {
+    const container = document.getElementById('addressesList');
+    if (!container) return;
+
+    if (this.addresses.length === 0) {
+      container.innerHTML = `
+        <div class="addresses-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <h3>Nenhum endereço cadastrado</h3>
+          <p>Crie endereços para usar nos seus eventos</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = this.addresses.map(addr => `
+      <div class="address-card" data-id="${addr.id}">
+        <div class="address-info">
+          <h4>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            ${addr.rua || 'Endereço'}${addr.numero ? `, ${addr.numero}` : ''}
+          </h4>
+          <p>${this.formatAddressFull(addr)}</p>
+        </div>
+        <div class="address-actions">
+          <button class="btn btn-secondary btn-sm" onclick="dashboardManager.editAddress(${addr.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Editar
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="dashboardManager.deleteAddress(${addr.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Excluir
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  showAddressForm(address = null) {
+    const container = document.getElementById('addressFormContainer');
+    const title = document.getElementById('addressFormTitle');
+    const list = document.getElementById('addressesList');
+    
+    if (!container) return;
+
+    // Limpar formulário
+    document.getElementById('addressForm').reset();
+    document.getElementById('addressId').value = '';
+    document.getElementById('addressFormError').innerHTML = '';
+
+    if (address) {
+      // Modo edição
+      title.textContent = 'Editar Endereço';
+      document.getElementById('addressId').value = address.id;
+      document.getElementById('addressCep').value = address.cep || '';
+      document.getElementById('addressRua').value = address.rua || '';
+      document.getElementById('addressNumero').value = address.numero || '';
+      document.getElementById('addressComplemento').value = address.complemento || '';
+      document.getElementById('addressBairro').value = address.bairro || '';
+      document.getElementById('addressCidade').value = address.cidade || '';
+      document.getElementById('addressEstado').value = address.estado || '';
+      this.editingAddressId = address.id;
+    } else {
+      title.textContent = 'Novo Endereço';
+      this.editingAddressId = null;
+    }
+
+    list.style.display = 'none';
+    container.style.display = 'block';
+  }
+
+  hideAddressForm() {
+    const container = document.getElementById('addressFormContainer');
+    const list = document.getElementById('addressesList');
+    
+    if (container) container.style.display = 'none';
+    if (list) list.style.display = '';
+    
+    this.editingAddressId = null;
+  }
+
+  async handleAddressSubmit() {
+    const formError = document.getElementById('addressFormError');
+    formError.innerHTML = '';
+
+    const data = {
+      cep: document.getElementById('addressCep').value.trim(),
+      rua: document.getElementById('addressRua').value.trim(),
+      numero: document.getElementById('addressNumero').value.trim(),
+      complemento: document.getElementById('addressComplemento').value.trim(),
+      bairro: document.getElementById('addressBairro').value.trim(),
+      cidade: document.getElementById('addressCidade').value.trim(),
+      estado: document.getElementById('addressEstado').value
+    };
+
+    // Validações
+    if (!data.rua || !data.numero || !data.bairro || !data.cidade || !data.estado) {
+      formError.innerHTML = '<div class="alert alert-error">Preencha todos os campos obrigatórios.</div>';
+      return;
+    }
+
+    try {
+      if (this.editingAddressId) {
+        await api.updateAddress(this.editingAddressId, data);
+        formError.innerHTML = '<div class="alert alert-success">Endereço atualizado com sucesso!</div>';
+      } else {
+        await api.createAddress(data);
+        formError.innerHTML = '<div class="alert alert-success">Endereço criado com sucesso!</div>';
+      }
+
+      setTimeout(() => {
+        this.hideAddressForm();
+        this.loadAddresses();
+        this.loadAddressesForSelect();
+      }, 1000);
+    } catch (error) {
+      formError.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
+    }
+  }
+
+  async editAddress(id) {
+    const address = this.addresses.find(a => a.id === id);
+    if (address) {
+      this.showAddressForm(address);
+    }
+  }
+
+  async deleteAddress(id) {
+    if (!confirm('Tem certeza que deseja excluir este endereço?')) {
+      return;
+    }
+
+    try {
+      await api.deleteAddress(id);
+      alert('Endereço excluído com sucesso!');
+      this.loadAddresses();
+      this.loadAddressesForSelect();
+    } catch (error) {
+      alert('Erro ao excluir endereço: ' + error.message);
+    }
+  }
+
+  toggleInlineAddressFields(show) {
+    const fields = document.getElementById('inlineAddressFields');
+    if (!fields) return;
+
+    if (show) {
+      fields.classList.remove('hidden');
+      // Limpar campos
+      document.getElementById('inlineCep').value = '';
+      document.getElementById('inlineRua').value = '';
+      document.getElementById('inlineNumero').value = '';
+      document.getElementById('inlineComplemento').value = '';
+      document.getElementById('inlineBairro').value = '';
+      document.getElementById('inlineCidade').value = '';
+      document.getElementById('inlineEstado').value = '';
+    } else {
+      fields.classList.add('hidden');
+    }
+  }
+
+  async fetchAddressByCep(cep, prefix) {
+    // Limpar CEP
+    cep = cep.replace(/\D/g, '');
+    if (cep.length !== 8) return;
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await response.json();
+
+      if (data.erro) {
+        console.log('CEP não encontrado');
+        return;
+      }
+
+      // Preencher campos baseado no prefixo
+      if (prefix === 'address') {
+        document.getElementById('addressRua').value = data.logradouro || '';
+        document.getElementById('addressBairro').value = data.bairro || '';
+        document.getElementById('addressCidade').value = data.localidade || '';
+        document.getElementById('addressEstado').value = data.uf || '';
+      } else if (prefix === 'inline') {
+        document.getElementById('inlineRua').value = data.logradouro || '';
+        document.getElementById('inlineBairro').value = data.bairro || '';
+        document.getElementById('inlineCidade').value = data.localidade || '';
+        document.getElementById('inlineEstado').value = data.uf || '';
+      }
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error);
+    }
+  }
+
+  async createInlineAddress() {
+    const data = {
+      cep: document.getElementById('inlineCep').value.trim(),
+      rua: document.getElementById('inlineRua').value.trim(),
+      numero: document.getElementById('inlineNumero').value.trim(),
+      complemento: document.getElementById('inlineComplemento').value.trim(),
+      bairro: document.getElementById('inlineBairro').value.trim(),
+      cidade: document.getElementById('inlineCidade').value.trim(),
+      estado: document.getElementById('inlineEstado').value
+    };
+
+    // Validações
+    if (!data.rua || !data.numero || !data.bairro || !data.cidade || !data.estado) {
+      throw new Error('Preencha todos os campos obrigatórios do endereço.');
+    }
+
+    const response = await api.createAddress(data);
+    return response.data;
   }
 }
 

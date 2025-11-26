@@ -196,6 +196,10 @@ CREATE TRIGGER trg_enderecos_normalize
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS endereco_id INTEGER;
 ALTER TABLE usuarios ADD CONSTRAINT IF NOT EXISTS fk_usuarios_endereco FOREIGN KEY (endereco_id) REFERENCES enderecos(id) ON DELETE SET NULL;
 
+-- Add endereco_id foreign key to eventos
+ALTER TABLE eventos ADD COLUMN IF NOT EXISTS endereco_id INTEGER;
+ALTER TABLE eventos ADD CONSTRAINT IF NOT EXISTS fk_eventos_endereco FOREIGN KEY (endereco_id) REFERENCES enderecos(id) ON DELETE SET NULL;
+
 -- =========================
 -- 6) Extras / compatibility and final adjustments
 -- =========================
