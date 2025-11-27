@@ -2,13 +2,15 @@
 window.loadRefundsData = async function() {
   const container = document.getElementById('refundsContainer');
   if (!container) {
-    console.warn('Container de reembolsos não encontrado');
     return;
   }
 
   function renderMessage(msg, type = 'info') {
     container.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
   }
+
+  // Mostrar loading
+  container.innerHTML = '<div class="loading-state"><p>Carregando pedidos de reembolso...</p></div>';
 
   // Se não autenticado, mostrar instrução amigável e abortar
   if (!api.isAuthenticated()) {
@@ -18,7 +20,6 @@ window.loadRefundsData = async function() {
 
   try {
     const resp = await api.getMyEvents();
-    console.debug('DEBUG: getMyEvents response', resp);
     // Handle API errors explicitly
     if (resp && resp.success === false) {
       console.error('API returned error for getMyEvents:', resp);

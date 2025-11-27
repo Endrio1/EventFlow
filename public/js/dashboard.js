@@ -68,7 +68,6 @@ class DashboardManager {
       link.addEventListener('click', (e) => {
         e.preventDefault(); // Sempre prevenir comportamento padrão
         const section = link.dataset.section;
-        console.log('Link clicado, data-section:', section, 'href:', link.getAttribute('href'));
         // If the link has a data-section attribute, treat it as an in-page navigation
         if (section) {
           this.showSection(section);
@@ -172,8 +171,6 @@ class DashboardManager {
   }
 
   showSection(section) {
-    console.log('showSection chamado com:', section);
-    
     // Atualizar sidebar
     document.querySelectorAll('.sidebar-link').forEach(link => {
       link.classList.toggle('active', link.dataset.section === section);
@@ -181,15 +178,12 @@ class DashboardManager {
 
     // Atualizar conteúdo
     const sections = document.querySelectorAll('.dashboard-section');
-    console.log('Total de seções encontradas:', sections.length);
     sections.forEach(sec => {
       const isActive = sec.id === section;
-      console.log(`Seção ${sec.id}: ${isActive ? 'ATIVA' : 'inativa'}`);
       sec.classList.toggle('active', isActive);
     });
 
     this.currentSection = section;
-    console.log('Seção atual definida como:', this.currentSection);
 
     // Carregar dados da seção
     switch (section) {
@@ -267,18 +261,25 @@ class DashboardManager {
   }
 
   async loadMyEvents() {
+    const container = document.getElementById('myEventsList');
+    if (container) {
+      container.innerHTML = '<div class="loading-state"><p>Carregando eventos...</p></div>';
+    }
+    
     try {
       const response = await api.getMyEvents();
       this.events = response.data;
       this.renderMyEvents();
     } catch (error) {
       console.error('Erro ao carregar eventos:', error);
-      document.getElementById('myEventsList').innerHTML = `
-        <div class="empty-state">
-          <h3>Erro ao carregar eventos</h3>
-          <p>${error.message}</p>
-        </div>
-      `;
+      if (container) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>Erro ao carregar eventos</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
     }
   }
 
@@ -532,14 +533,10 @@ class DashboardManager {
         formData.append('image', imageFile);
       }
 
-      // Debug: verificar fluxo (create vs update)
-      console.log('[DASHBOARD] submitting event, editingEventId=', this.editingEventId);
       if (this.editingEventId) {
-        console.log('[DASHBOARD] calling api.updateEvent with id=', this.editingEventId);
         await api.updateEvent(this.editingEventId, formData);
         formError.innerHTML = '<div class="alert alert-success">Evento atualizado com sucesso!</div>';
       } else {
-        console.log('[DASHBOARD] calling api.createEvent');
         await api.createEvent(formData);
         formError.innerHTML = '<div class="alert alert-success">Evento criado com sucesso!</div>';
       }
@@ -907,7 +904,6 @@ class DashboardManager {
       const data = await response.json();
 
       if (data.erro) {
-        console.log('CEP não encontrado');
         return;
       }
 

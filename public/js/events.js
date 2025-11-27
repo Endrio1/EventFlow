@@ -362,7 +362,7 @@ class EventsManager {
                   e => e.event_id === event.id && (e.status === 'confirmed' || e.status === 'attended')
                 );
               } catch (err) {
-                console.warn('Erro ao verificar participação', err);
+                // Erro silencioso - não crítico
               }
             }
 

@@ -5,6 +5,13 @@ const { authMiddleware, checkRole } = require('../middlewares/auth');
 const upload = require('../config/multer');
 const feedbackController = require('../controllers/feedbackController');
 
+// Rotas específicas devem vir ANTES das rotas com parâmetros dinâmicos
+router.get('/organizer/my-events', 
+  authMiddleware,
+  checkRole('organizer', 'admin'),
+  eventController.myEvents
+);
+
 // Rotas públicas
 router.get('/', eventController.index);
 router.get('/:id', eventController.show);
@@ -28,12 +35,6 @@ router.delete('/:id',
   authMiddleware,
   checkRole('organizer', 'admin'),
   eventController.destroy
-);
-
-router.get('/organizer/my-events', 
-  authMiddleware,
-  checkRole('organizer', 'admin'),
-  eventController.myEvents
 );
 
 // Rota para fechar/abrir vendas (organizador do evento ou admin)

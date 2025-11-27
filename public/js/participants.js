@@ -5,9 +5,12 @@ window.loadParticipantsData = async function() {
   const searchInput = document.getElementById('searchInput');
 
   if (!selectEvent || !participantsContainer) {
-    console.warn('Elementos de participantes não encontrados');
     return;
   }
+
+  // Mostrar loading no select
+  selectEvent.innerHTML = '<option value="">Carregando eventos...</option>';
+  participantsContainer.innerHTML = '<div class="loading-state"><p>Carregando...</p></div>';
 
   function renderParticipants(list) {
     if (!list || list.length === 0) {

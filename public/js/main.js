@@ -195,9 +195,4 @@ window.addEventListener('DOMNodeRemoved', (e) => {
   }
 });
 
-// Log de desenvolvimento
-if (window.location.hostname === 'localhost') {
-  console.log('%cEventFlow', 'color: #1E40AF; font-size: 24px; font-weight: bold;');
-  console.log('%cSistema de Gerenciamento de Eventos', 'color: #64748B; font-size: 14px;');
-  console.log('%cAmbiente de Desenvolvimento', 'color: #F97316; font-size: 12px;');
-}
+

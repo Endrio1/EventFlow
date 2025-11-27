@@ -24,7 +24,6 @@
   async function loadUsers(query = ''){
     const q = query ? `?search=${encodeURIComponent(query)}` : '';
     const url = `${apiRoot}/admin/users${q}`;
-    console.log('Loading users from URL:', url);
     try {
       const data = await fetchJSON(url);
       renderUsers(data.data || data || []);
@@ -169,7 +168,6 @@
   function ensureModalInBody() {
     const modal = document.getElementById('enrollmentsModal');
     if (modal && modal.parentElement !== document.body) {
-      console.log('Movendo modal para body...');
       document.body.appendChild(modal);
     }
   }

@@ -45,7 +45,7 @@ html, body {
   color: var(--white);
   position: relative;
   overflow: hidden;
-  min-height: 70vh;
+  
 }
 
 .navbar {
@@ -295,9 +295,7 @@ html, body {
 }
 
 /* Hero Content */
-.hero-content {
-  padding: 2.5rem 0 3rem;
-}
+
 
 .hero-content .container {
   display: grid;
@@ -459,7 +457,6 @@ html, body {
 }
 
 /* Events Section */
-
 
 .section-header {
   text-align: center;
@@ -2496,9 +2493,7 @@ html, body {
   }
   
   /* Navbar */
-  .navbar {
-    padding: 0 1rem;
-  }
+
   
   .user-avatar {
     width: 36px;
