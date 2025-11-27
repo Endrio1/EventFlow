@@ -1,5 +1,5 @@
-// Configuração da API
-const API_BASE_URL = 'http://localhost:3000/api';
+// Configuração da API - detecta automaticamente a URL base
+const API_BASE_URL = window.location.origin + '/api';
 
 // Classe para gerenciar as requisições à API
 class API {
