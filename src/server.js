@@ -5,9 +5,11 @@ const path = require('path');
 const { syncDatabase } = require('./models');
 const routes = require('./routes');
 const errorHandler = require('./middlewares/errorHandler');
+const initializeDatabase = require('./config/initDatabase');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
 
 // Middlewares
 app.use(cors());
@@ -34,12 +36,19 @@ app.use(errorHandler);
 // Inicializar servidor
 const startServer = async () => {
   try {
+    // Inicializa o banco de dados (cria tabelas e admin se necessário)
+    const dbReady = await initializeDatabase();
+    
+    if (!dbReady) {
+      console.warn('⚠️ Servidor iniciando com problemas no banco de dados');
+    }
+    
     // Sincronizar banco de dados
     await syncDatabase();
     
     // Iniciar servidor
-    app.listen(PORT, () => {
-      console.log(`\n🚀 Servidor EventFlow rodando na porta ${PORT}`);
+    app.listen(PORT, HOST, () => {
+      console.log(`\n🚀 Servidor EventFlow rodando em http://${HOST}:${PORT}`);
       console.log(`📍 API: http://localhost:${PORT}/api`);
       console.log(`🌐 Frontend: http://localhost:${PORT}`);
       console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}\n`);
