@@ -90,17 +90,11 @@ class EventController {
         } catch (e) {
           console.log('[EVENT][STORE] body=', req.body);
         }
-        if (req.file) {
-          console.log('[EVENT][STORE] file=', {
-            fieldname: req.file.fieldname,
-            originalname: req.file.originalname,
-            filename: req.file.filename,
-            mimetype: req.file.mimetype,
-            size: req.file.size,
-            path: req.file.path
-          });
+        if (req.files && req.files.length > 0) {
+          console.log('[EVENT][STORE] files count=', req.files.length);
+          req.files.forEach((f, i) => console.log(`[EVENT][STORE] file[${i}]=`, f.filename));
         } else {
-          console.log('[EVENT][STORE] file= null');
+          console.log('[EVENT][STORE] files= []');
         }
       }
 
@@ -114,6 +108,9 @@ class EventController {
         });
       }
 
+      // Processar imagens (até 5)
+      const images = req.files ? req.files.map(f => `/uploads/events/${f.filename}`) : [];
+
       // Criar evento
       const event = new Event({
         title,
@@ -123,16 +120,18 @@ class EventController {
         date,
         time,
         capacity: parseInt(capacity),
-        image: req.file ? `/uploads/events/${req.file.filename}` : null,
+        images,
         organizador_id: req.userId
       });
       await event.save();
 
       return res.status(201).json({ success: true, message: 'Evento criado com sucesso', data: event });
     } catch (error) {
-      // Remover arquivo se upload foi feito mas erro ocorreu
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
+      // Remover arquivos se upload foi feito mas erro ocorreu
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(f => {
+          if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+        });
       }
       next(error);
     }
@@ -152,58 +151,71 @@ class EventController {
         } catch (e) {
           console.log('[EVENT][UPDATE] body=', req.body);
         }
-        if (req.file) {
-          console.log('[EVENT][UPDATE] file=', {
-            fieldname: req.file.fieldname,
-            originalname: req.file.originalname,
-            filename: req.file.filename,
-            mimetype: req.file.mimetype,
-            size: req.file.size,
-            path: req.file.path
-          });
+        if (req.files && req.files.length > 0) {
+          console.log('[EVENT][UPDATE] files count=', req.files.length);
+          req.files.forEach((f, i) => console.log(`[EVENT][UPDATE] file[${i}]=`, f.filename));
         } else {
-          console.log('[EVENT][UPDATE] file= null');
+          console.log('[EVENT][UPDATE] files= []');
         }
       }
-      const { title, description, category, location, date, time, capacity, status } = req.body;
+      const { title, description, category, location, date, time, capacity, status, removeImages } = req.body;
 
       const event = await Event.findById(id);
       if (!event) {
-        if (req.file) fs.unlinkSync(req.file.path);
+        if (req.files) req.files.forEach(f => fs.existsSync(f.path) && fs.unlinkSync(f.path));
         return res.status(404).json({ success: false, message: 'Evento não encontrado' });
       }
 
       // Verificar se usuário é o organizador
-  if (event.organizador_id.toString() !== req.userId && req.userRole !== 'admin') {
-        if (req.file) fs.unlinkSync(req.file.path);
+      if (event.organizador_id.toString() !== req.userId && req.userRole !== 'admin') {
+        if (req.files) req.files.forEach(f => fs.existsSync(f.path) && fs.unlinkSync(f.path));
         return res.status(403).json({ success: false, message: 'Você não tem permissão para editar este evento' });
       }
 
       // Atualizar campos
-      if (title) event.title = title;
-      if (description) event.description = description;
-      if (category) event.category = category;
-      if (location) event.location = location;
-      if (date) event.date = date;
-      if (time) event.time = time;
-      if (capacity) event.capacity = parseInt(capacity);
+      if (title) event.titulo = title;
+      if (description) event.descricao = description;
+      if (category) event.categoria = category;
+      if (location) event.local = location;
+      if (date) event.data = date;
+      if (time) event.hora = time;
+      if (capacity) event.capacidade = parseInt(capacity);
       if (status) event.status = status;
 
-      // Atualizar imagem se nova foi enviada
-      if (req.file) {
-        // Remover imagem antiga
-        if (event.image) {
-          const oldImagePath = path.join(__dirname, '../../public', event.image);
-          if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
-        }
-        event.image = `/uploads/events/${req.file.filename}`;
+      // Processar remoção de imagens existentes
+      let currentImages = [...(event.imagens || [])];
+      if (removeImages) {
+        const toRemove = Array.isArray(removeImages) ? removeImages : JSON.parse(removeImages || '[]');
+        toRemove.forEach(imgPath => {
+          const fullPath = path.join(__dirname, '../../public', imgPath);
+          if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+          currentImages = currentImages.filter(img => img !== imgPath);
+        });
       }
 
+      // Adicionar novas imagens (respeitando limite de 5)
+      if (req.files && req.files.length > 0) {
+        const newImages = req.files.map(f => `/uploads/events/${f.filename}`);
+        const totalImages = currentImages.length + newImages.length;
+        
+        if (totalImages > 5) {
+          // Remover arquivos novos que excedem o limite
+          req.files.forEach(f => fs.existsSync(f.path) && fs.unlinkSync(f.path));
+          return res.status(400).json({ 
+            success: false, 
+            message: `Limite de 5 imagens excedido. Você tem ${currentImages.length} imagens e tentou adicionar ${newImages.length}.` 
+          });
+        }
+        
+        currentImages = [...currentImages, ...newImages];
+      }
+
+      event.imagens = currentImages;
       await event.save();
 
       return res.json({ success: true, message: 'Evento atualizado com sucesso', data: event });
     } catch (error) {
-      if (req.file) fs.unlinkSync(req.file.path);
+      if (req.files) req.files.forEach(f => fs.existsSync(f.path) && fs.unlinkSync(f.path));
       next(error);
     }
   }
@@ -220,10 +232,12 @@ class EventController {
         return res.status(403).json({ success: false, message: 'Você não tem permissão para deletar este evento' });
       }
 
-      // Remover imagem
-      if (event.image) {
-        const imagePath = path.join(__dirname, '../../public', event.image);
-        if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+      // Remover todas as imagens
+      if (event.imagens && event.imagens.length > 0) {
+        event.imagens.forEach(imgPath => {
+          const fullPath = path.join(__dirname, '../../public', imgPath);
+          if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+        });
       }
 
       await Event.deleteOne({ _id: id });

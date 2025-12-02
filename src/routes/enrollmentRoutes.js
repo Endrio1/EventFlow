@@ -21,4 +21,7 @@ router.get('/events/:eventId/participants',
   enrollmentController.eventParticipants
 );
 
+// DEBUG: Endpoint temporário para debug de inscrições
+router.get('/debug/enrollments/:eventId?', enrollmentController.debugEnrollments);
+
 module.exports = router;

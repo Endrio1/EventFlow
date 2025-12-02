@@ -50,6 +50,13 @@ class AuthManager {
       window.location.href = '/dashboard.html';
     });
 
+    // Redirecionar para a página de administração quando o link for clicado
+    document.getElementById('dashboardLink')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Navegação direta para a página administrativa
+      window.location.href = '/admin.html';
+    });
+
     document.getElementById('myEnrollmentsLink')?.addEventListener('click', (e) => {
       e.preventDefault();
       this.showMyEnrollments();
@@ -59,6 +66,11 @@ class AuthManager {
   updateUI() {
     const isAuthenticated = api.isAuthenticated();
     const user = api.getCurrentUser();
+    // Safeguard: normalize in-place in case storage contains portuguese fields
+    if (user) {
+      if (!user.name && user.nome) user.name = user.nome;
+      if (!user.role && user.papel) user.role = user.papel;
+    }
 
     const authButtons = document.getElementById('authButtons');
     const userMenu = document.getElementById('userMenu');
@@ -75,14 +87,15 @@ class AuthManager {
         userMenu.style.display = 'block';
       }
 
-      // Atualizar avatar
+      // Atualizar avatar (fallback para email ou texto genérico)
       const userName = document.getElementById('userName');
       if (userName) {
-        userName.textContent = user.name.charAt(0).toUpperCase();
+        const display = (user.name || user.nome || user.email || 'U').toString();
+        userName.textContent = display.charAt(0).toUpperCase();
       }
 
       // Mostrar link do dashboard para organizadores e admins
-      if (user.role === 'organizer' || user.role === 'admin') {
+      if ((user.role === 'organizer') || (user.role === 'admin') || (user.papel === 'organizer') || (user.papel === 'admin')) {
         if (dashboardLink) {
           dashboardLink.classList.remove('hidden');
           dashboardLink.style.display = 'block';

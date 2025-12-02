@@ -13,14 +13,14 @@ router.get('/:id', eventController.show);
 router.post('/', 
   authMiddleware, 
   checkRole('organizer', 'admin'),
-  upload.single('image'),
+  upload.array('images', 5),
   eventController.store
 );
 
 router.put('/:id', 
   authMiddleware,
   checkRole('organizer', 'admin'),
-  upload.single('image'),
+  upload.array('images', 5),
   eventController.update
 );
 

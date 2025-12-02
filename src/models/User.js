@@ -6,8 +6,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 3,
-    maxlength: 100,
-    alias: 'name'
+    maxlength: 100
   },
   email: {
     type: String,
@@ -19,14 +18,12 @@ const userSchema = new mongoose.Schema({
   senha: {
     type: String,
     required: true,
-    minlength: 6,
-    alias: 'password'
+    minlength: 6
   },
   papel: {
     type: String,
     enum: ['user', 'organizer', 'admin'],
-    default: 'user',
-    alias: 'role'
+    default: 'user'
   },
   avatar: {
     type: String,
@@ -35,9 +32,14 @@ const userSchema = new mongoose.Schema({
 }, {
   collection: 'usuarios',
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: { virtuals: true, aliases: false },
+  toObject: { virtuals: true, aliases: false }
 });
+
+// Virtuals para compatibilidade com frontend
+userSchema.virtual('name').get(function() { return this.nome; });
+userSchema.virtual('password').get(function() { return this.senha; });
+userSchema.virtual('role').get(function() { return this.papel; });
 
 // Hash da senha antes de salvar
 userSchema.pre('save', async function(next) {

@@ -371,11 +371,48 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
+.event-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
 .event-image {
   width: 100%;
   height: 200px;
   object-fit: cover;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  transition: opacity 0.3s ease;
+}
+
+/* Indicadores do Carrossel */
+.carousel-indicators {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.carousel-dot.active {
+  background: var(--white);
+  transform: scale(1.2);
+}
+
+.carousel-dot:hover {
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .event-content {

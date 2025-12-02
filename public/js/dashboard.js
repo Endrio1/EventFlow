@@ -4,6 +4,9 @@ class DashboardManager {
     this.currentSection = 'overview';
     this.events = [];
     this.editingEventId = null;
+    this.activities = [];
+    this.editingActivityId = null;
+    this.imagesToRemove = []; // Imagens existentes marcadas para remoção
     this.init();
   }
 
@@ -25,6 +28,7 @@ class DashboardManager {
 
     this.updateUserInfo();
     this.attachEventListeners();
+    this.attachActivityListeners();
     this.loadOverview();
   }
 
@@ -87,9 +91,9 @@ class DashboardManager {
       this.showSection('events');
     });
 
-    // Preview de imagem
-    document.getElementById('eventImage')?.addEventListener('change', (e) => {
-      this.previewImage(e.target.files[0]);
+    // Preview de múltiplas imagens
+    document.getElementById('eventImages')?.addEventListener('change', (e) => {
+      this.previewImages(e.target.files);
     });
 
     // Definir data mínima para hoje
@@ -375,7 +379,7 @@ class DashboardManager {
     document.getElementById('formTitle').textContent = 'Editar Evento';
 
     // Preencher formulário
-  document.getElementById('eventId').value = (event._id || event.id);
+    document.getElementById('eventId').value = (event._id || event.id);
     document.getElementById('eventTitle').value = event.title;
     document.getElementById('eventCategory').value = event.category;
     document.getElementById('eventDescription').value = event.description;
@@ -384,11 +388,12 @@ class DashboardManager {
     document.getElementById('eventTime').value = event.time;
     document.getElementById('eventCapacity').value = event.capacity;
 
-    // Mostrar preview da imagem atual
-    if (event.image) {
-      const preview = document.getElementById('imagePreview');
-      preview.innerHTML = `<img src="http://localhost:3000${event.image}" alt="Preview">`;
-    }
+    // Mostrar imagens existentes
+    this.imagesToRemove = [];
+    this.renderExistingImages(event.images || (event.image ? [event.image] : []));
+
+    // Carregar atividades do evento
+    this.loadActivities(eventId);
   }
 
   async handleEventSubmit() {
@@ -405,9 +410,23 @@ class DashboardManager {
       formData.append('time', document.getElementById('eventTime').value);
       formData.append('capacity', document.getElementById('eventCapacity').value);
 
-      const imageFile = document.getElementById('eventImage').files[0];
-      if (imageFile) {
-        formData.append('image', imageFile);
+      // Múltiplas imagens
+      const imageFiles = document.getElementById('eventImages').files;
+      if (imageFiles && imageFiles.length > 0) {
+        // Validar quantidade
+        const existingImages = this.getExistingImagesCount();
+        if (imageFiles.length + existingImages - this.imagesToRemove.length > 5) {
+          formError.innerHTML = '<div class="alert alert-error">Máximo de 5 imagens permitidas.</div>';
+          return;
+        }
+        for (let i = 0; i < imageFiles.length; i++) {
+          formData.append('images', imageFiles[i]);
+        }
+      }
+
+      // Imagens a remover (apenas na edição)
+      if (this.editingEventId && this.imagesToRemove.length > 0) {
+        formData.append('removeImages', JSON.stringify(this.imagesToRemove));
       }
 
       // Debug: verificar fluxo (create vs update)
@@ -502,24 +521,382 @@ class DashboardManager {
   resetForm() {
     document.getElementById('eventForm').reset();
     document.getElementById('eventId').value = '';
-    document.getElementById('imagePreview').innerHTML = '';
+    document.getElementById('imagesPreview').innerHTML = '';
+    document.getElementById('existingImages').innerHTML = '';
     document.getElementById('formError').innerHTML = '';
     this.editingEventId = null;
+    this.imagesToRemove = [];
+    
+    // Esconder seção de atividades (só aparece na edição)
+    const activitiesSection = document.getElementById('activitiesSection');
+    if (activitiesSection) {
+      activitiesSection.style.display = 'none';
+    }
+    this.activities = [];
   }
 
-  previewImage(file) {
-    const preview = document.getElementById('imagePreview');
+  previewImages(files) {
+    const preview = document.getElementById('imagesPreview');
+    preview.innerHTML = '';
 
-    if (!file) {
-      preview.innerHTML = '';
+    if (!files || files.length === 0) return;
+
+    // Validar quantidade total
+    const existingCount = this.getExistingImagesCount();
+    const totalAfterUpload = files.length + existingCount - this.imagesToRemove.length;
+    
+    if (totalAfterUpload > 5) {
+      alert(`Máximo de 5 imagens. Você tem ${existingCount - this.imagesToRemove.length} existentes e está tentando adicionar ${files.length}.`);
+      document.getElementById('eventImages').value = '';
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 300px; border-radius: var(--border-radius); box-shadow: var(--shadow);">`;
+    Array.from(files).forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const div = document.createElement('div');
+        div.className = 'image-preview-item';
+        div.innerHTML = `
+          <img src="${e.target.result}" alt="Preview ${index + 1}">
+          <span class="image-preview-badge">Nova</span>
+        `;
+        preview.appendChild(div);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  renderExistingImages(images) {
+    const container = document.getElementById('existingImages');
+    container.innerHTML = '';
+
+    if (!images || images.length === 0) return;
+
+    container.innerHTML = `
+      <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Imagens Atuais (${images.length}/5)</label>
+      <div class="existing-images-list">
+        ${images.map((img, index) => `
+          <div class="existing-image-item" data-image="${img}">
+            <img src="http://localhost:3000${img}" alt="Imagem ${index + 1}">
+            <button type="button" class="btn-remove-image" data-image="${img}" title="Remover imagem">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    // Adicionar listeners para remoção
+    container.querySelectorAll('.btn-remove-image').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const imgPath = btn.dataset.image;
+        this.toggleImageRemoval(imgPath);
+      });
+    });
+  }
+
+  toggleImageRemoval(imgPath) {
+    const item = document.querySelector(`.existing-image-item[data-image="${imgPath}"]`);
+    
+    if (this.imagesToRemove.includes(imgPath)) {
+      // Desmarcar para remoção
+      this.imagesToRemove = this.imagesToRemove.filter(i => i !== imgPath);
+      item?.classList.remove('marked-for-removal');
+    } else {
+      // Marcar para remoção
+      this.imagesToRemove.push(imgPath);
+      item?.classList.add('marked-for-removal');
+    }
+  }
+
+  getExistingImagesCount() {
+    const container = document.getElementById('existingImages');
+    return container.querySelectorAll('.existing-image-item').length;
+  }
+
+  // ==================== ATIVIDADES ====================
+
+  attachActivityListeners() {
+    // Botão adicionar atividade
+    document.getElementById('btnAddActivity')?.addEventListener('click', () => {
+      this.showActivityModal();
+    });
+
+    // Fechar modal de atividade
+    document.getElementById('closeActivityModal')?.addEventListener('click', () => {
+      this.hideActivityModal();
+    });
+
+    document.getElementById('btnCancelActivity')?.addEventListener('click', () => {
+      this.hideActivityModal();
+    });
+
+    // Fechar modal ao clicar fora
+    document.getElementById('activityModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'activityModal') {
+        this.hideActivityModal();
+      }
+    });
+
+    // Formulário de atividade
+    document.getElementById('activityForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.handleActivitySubmit();
+    });
+  }
+
+  async loadActivities(eventId) {
+    const activitiesSection = document.getElementById('activitiesSection');
+    const activitiesList = document.getElementById('activitiesList');
+
+    if (!eventId) {
+      activitiesSection.style.display = 'none';
+      return;
+    }
+
+    activitiesSection.style.display = 'block';
+    activitiesList.innerHTML = '<p class="text-muted">Carregando atividades...</p>';
+
+    try {
+      const response = await api.getEventActivities(eventId);
+      this.activities = response.data || [];
+      this.renderActivities();
+    } catch (error) {
+      console.error('Erro ao carregar atividades:', error);
+      activitiesList.innerHTML = `<p class="text-muted">Erro ao carregar atividades: ${error.message}</p>`;
+    }
+  }
+
+  renderActivities() {
+    const activitiesList = document.getElementById('activitiesList');
+
+    if (this.activities.length === 0) {
+      activitiesList.innerHTML = `
+        <div class="activities-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <p>Nenhuma atividade cadastrada para este evento.</p>
+          <p>Clique em "Nova Atividade" para adicionar.</p>
+        </div>
+      `;
+      return;
+    }
+
+    activitiesList.innerHTML = this.activities.map(activity => this.createActivityItem(activity)).join('');
+    this.attachActivityItemListeners();
+  }
+
+  createActivityItem(activity) {
+    const activityId = activity._id || activity.id;
+    const startDate = new Date(activity.start_date || activity.data_inicio);
+    const endDate = new Date(activity.end_date || activity.data_fim);
+
+    const formatDateTime = (date) => {
+      return date.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     };
-    reader.readAsDataURL(file);
+
+    const location = activity.location || activity.local || '';
+    const speaker = activity.speaker || activity.palestrante || '';
+    const description = activity.description || activity.descricao || '';
+    const title = activity.title || activity.titulo || 'Sem título';
+
+    return `
+      <div class="activity-item" data-activity-id="${activityId}">
+        <div class="activity-item-header">
+          <div>
+            <div class="activity-item-title">${title}</div>
+          </div>
+          <div class="activity-item-actions">
+            <button class="btn btn-secondary btn-sm btn-edit-activity" data-activity-id="${activityId}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Editar
+            </button>
+            <button class="btn btn-danger btn-sm btn-delete-activity" data-activity-id="${activityId}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Excluir
+            </button>
+          </div>
+        </div>
+        <div class="activity-item-meta">
+          <span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            ${formatDateTime(startDate)} - ${formatDateTime(endDate)}
+          </span>
+          ${location ? `
+          <span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            ${location}
+          </span>
+          ` : ''}
+          ${speaker ? `
+          <span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            ${speaker}
+          </span>
+          ` : ''}
+        </div>
+        ${description ? `<div class="activity-item-description">${description}</div>` : ''}
+      </div>
+    `;
+  }
+
+  attachActivityItemListeners() {
+    // Editar atividade
+    document.querySelectorAll('.btn-edit-activity').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.editActivity(btn.dataset.activityId);
+      });
+    });
+
+    // Excluir atividade
+    document.querySelectorAll('.btn-delete-activity').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await this.deleteActivity(btn.dataset.activityId);
+      });
+    });
+  }
+
+  showActivityModal(activity = null) {
+    const modal = document.getElementById('activityModal');
+    const form = document.getElementById('activityForm');
+    const title = document.getElementById('activityModalTitle');
+    const errorDiv = document.getElementById('activityFormError');
+
+    form.reset();
+    errorDiv.innerHTML = '';
+
+    if (activity) {
+      // Modo edição
+      title.textContent = 'Editar Atividade';
+      this.editingActivityId = activity._id || activity.id;
+      
+      document.getElementById('activityId').value = this.editingActivityId;
+      document.getElementById('activityEventId').value = this.editingEventId;
+      document.getElementById('activityTitle').value = activity.title || activity.titulo || '';
+      document.getElementById('activityDescription').value = activity.description || activity.descricao || '';
+      document.getElementById('activityLocation').value = activity.location || activity.local || '';
+      document.getElementById('activitySpeaker').value = activity.speaker || activity.palestrante || '';
+      document.getElementById('activityCapacity').value = activity.capacity || activity.vagas || '';
+      document.getElementById('activityOrder').value = activity.order || activity.ordem || 0;
+
+      // Formatar datas para datetime-local
+      const startDate = new Date(activity.start_date || activity.data_inicio);
+      const endDate = new Date(activity.end_date || activity.data_fim);
+      
+      document.getElementById('activityStartDate').value = this.formatDateTimeLocal(startDate);
+      document.getElementById('activityEndDate').value = this.formatDateTimeLocal(endDate);
+    } else {
+      // Modo criação
+      title.textContent = 'Nova Atividade';
+      this.editingActivityId = null;
+      document.getElementById('activityEventId').value = this.editingEventId;
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  hideActivityModal() {
+    const modal = document.getElementById('activityModal');
+    modal.style.display = 'none';
+    this.editingActivityId = null;
+  }
+
+  formatDateTimeLocal(date) {
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  async handleActivitySubmit() {
+    const errorDiv = document.getElementById('activityFormError');
+    errorDiv.innerHTML = '';
+
+    const eventId = this.editingEventId;
+    if (!eventId) {
+      errorDiv.innerHTML = '<div class="alert alert-error">Evento não encontrado.</div>';
+      return;
+    }
+
+    const data = {
+      title: document.getElementById('activityTitle').value,
+      description: document.getElementById('activityDescription').value,
+      start_date: new Date(document.getElementById('activityStartDate').value).toISOString(),
+      end_date: new Date(document.getElementById('activityEndDate').value).toISOString(),
+      location: document.getElementById('activityLocation').value,
+      speaker: document.getElementById('activitySpeaker').value,
+      order: parseInt(document.getElementById('activityOrder').value) || 0
+    };
+
+    const capacity = document.getElementById('activityCapacity').value;
+    if (capacity) {
+      data.capacity = parseInt(capacity);
+    }
+
+    try {
+      if (this.editingActivityId) {
+        await api.updateActivity(this.editingActivityId, data);
+        errorDiv.innerHTML = '<div class="alert alert-success">Atividade atualizada com sucesso!</div>';
+      } else {
+        await api.createActivity(eventId, data);
+        errorDiv.innerHTML = '<div class="alert alert-success">Atividade criada com sucesso!</div>';
+      }
+
+      setTimeout(() => {
+        this.hideActivityModal();
+        this.loadActivities(eventId);
+      }, 1000);
+    } catch (error) {
+      errorDiv.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
+    }
+  }
+
+  editActivity(activityId) {
+    const activity = this.activities.find(a => (a._id || a.id) == activityId);
+    if (activity) {
+      this.showActivityModal(activity);
+    }
+  }
+
+  async deleteActivity(activityId) {
+    if (!confirm('Tem certeza que deseja excluir esta atividade?')) {
+      return;
+    }
+
+    try {
+      await api.deleteActivity(activityId);
+      alert('Atividade excluída com sucesso!');
+      this.loadActivities(this.editingEventId);
+    } catch (error) {
+      alert('Erro ao excluir atividade: ' + error.message);
+    }
   }
 }
 

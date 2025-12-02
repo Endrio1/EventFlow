@@ -37,6 +37,7 @@ class EventsManager {
 
     // Filtro de categoria
     document.getElementById('categoryFilter')?.addEventListener('change', (e) => {
+      console.log(e.target.value);
       this.filters.category = e.target.value;
       this.currentPage = 1;
       this.loadEvents();
@@ -105,13 +106,28 @@ class EventsManager {
   const showCapacity = currentUser && (currentUser.role === 'organizer' || currentUser.role === 'admin');
   const salesBadge = event.sales_closed ? `<span class="sales-closed-badge">Vendas Fechadas</span>` : '';
 
-      const fallbackSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="#1E40AF" width="400" height="200"/><text fill="white" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">Evento</text></svg>';
-      const fallbackDataUrl = 'data:image/svg+xml,' + encodeURIComponent(fallbackSvg);
-      const imageUrl = event.image ? `http://localhost:3000${event.image}` : fallbackDataUrl;
+  const fallbackSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="#1E40AF" width="400" height="200"/></svg>';
+  // Usar base64 evita problemas com escape de aspas em alguns navegadores/caches
+  const fallbackDataUrl = 'data:image/svg+xml;base64,' + btoa(fallbackSvg);
+  
+  // Suporta tanto array de imagens (images) quanto imagem única (image) para compatibilidade
+  const images = event.images || (event.image ? [event.image] : []);
+  const imageUrl = images.length > 0 ? `http://localhost:3000${images[0]}` : fallbackDataUrl;
+  
+  // Gerar carrossel de imagens se houver mais de uma
+  const imagesData = JSON.stringify(images.map(img => `http://localhost:3000${img}`));
+  const carouselIndicators = images.length > 1 ? `
+    <div class="carousel-indicators">
+      ${images.map((_, idx) => `<span class="carousel-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"></span>`).join('')}
+    </div>
+  ` : '';
 
     return `
-      <div class="event-card" data-event-id="${eventId}">
-          <img src="${imageUrl}" alt="${event.title}" class="event-image" onerror="this.src='${fallbackDataUrl}'">
+      <div class="event-card" data-event-id="${eventId}" data-images='${imagesData}'>
+        <div class="event-image-container">
+          <img src="${imageUrl}" alt="${event.title || ''}" class="event-image" onerror="this.style.display='none'" />
+          ${carouselIndicators}
+        </div>
         <div class="event-content">
           ${salesBadge}
           <span class="event-category">${event.category}</span>
@@ -171,6 +187,52 @@ class EventsManager {
   }
 
   attachEventCardListeners() {
+    // Carrossel de imagens no hover
+    document.querySelectorAll('.event-card').forEach(card => {
+      let carouselInterval = null;
+      let currentIndex = 0;
+      
+      const imagesData = card.dataset.images;
+      if (!imagesData) return;
+      
+      let images;
+      try {
+        images = JSON.parse(imagesData);
+      } catch(e) {
+        return;
+      }
+      
+      if (images.length <= 1) return;
+      
+      const imgElement = card.querySelector('.event-image');
+      const dots = card.querySelectorAll('.carousel-dot');
+      
+      const updateCarousel = (index) => {
+        if (imgElement && images[index]) {
+          imgElement.src = images[index];
+          dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+          });
+        }
+      };
+      
+      card.addEventListener('mouseenter', () => {
+        carouselInterval = setInterval(() => {
+          currentIndex = (currentIndex + 1) % images.length;
+          updateCarousel(currentIndex);
+        }, 1500);
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        if (carouselInterval) {
+          clearInterval(carouselInterval);
+          carouselInterval = null;
+        }
+        currentIndex = 0;
+        updateCarousel(0);
+      });
+    });
+
     // Ver detalhes
     document.querySelectorAll('.btn-view-event').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -205,7 +267,10 @@ class EventsManager {
       });
 
       const isFull = event.current_enrollments >= event.capacity;
-      const imageUrl = event.image ? `http://localhost:3000${event.image}` : '';
+      
+      // Suporta múltiplas imagens
+      const images = event.images || (event.image ? [event.image] : []);
+      const mainImageUrl = images.length > 0 ? `http://localhost:3000${images[0]}` : '';
 
       const currentUser = api.getCurrentUser();
       const showCapacity = currentUser && (currentUser.role === 'organizer' || currentUser.role === 'admin');
@@ -222,8 +287,26 @@ class EventsManager {
         </div>
       ` : '';
 
+      // Galeria de imagens
+      const galleryHtml = images.length > 0 ? `
+        <div class="event-modal-gallery" style="margin-bottom: 1.5rem;">
+          <img src="${mainImageUrl}" alt="${event.title}" id="modalMainImage" style="width: 100%; height: 250px; object-fit: cover; border-radius: var(--border-radius); margin-bottom: 0.5rem;">
+          ${images.length > 1 ? `
+            <div class="event-modal-thumbnails" style="display: flex; gap: 0.5rem; overflow-x: auto;">
+              ${images.map((img, idx) => `
+                <img src="http://localhost:3000${img}" 
+                     alt="Imagem ${idx + 1}" 
+                     class="modal-thumbnail ${idx === 0 ? 'active' : ''}"
+                     style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid ${idx === 0 ? 'var(--primary-color)' : 'transparent'};"
+                     onclick="document.getElementById('modalMainImage').src=this.src; document.querySelectorAll('.modal-thumbnail').forEach(t => t.style.border='2px solid transparent'); this.style.border='2px solid var(--primary-color)';">
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      ` : '';
+
       const content = `
-        ${imageUrl ? `<img src="${imageUrl}" alt="${event.title}" style="width: 100%; height: 250px; object-fit: cover; border-radius: var(--border-radius); margin-bottom: 1.5rem;">` : ''}
+        ${galleryHtml}
         
         ${salesBadge}
         <span class="event-category">${event.category}</span>
@@ -259,6 +342,25 @@ class EventsManager {
         </div>
 
         ${capacityHtml}
+
+        <!-- Seção de Atividades -->
+        <div id="eventActivities-${eventIdInternal}" class="event-activities-section" style="margin-bottom: 1.5rem;">
+          <h4 style="margin-bottom: 1rem; color: var(--text-color);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+            Programação do Evento
+          </h4>
+          <div id="activitiesList-${eventIdInternal}">
+            <p style="color: var(--secondary-color); text-align: center;">Carregando atividades...</p>
+          </div>
+        </div>
+
         ${api.isAuthenticated() && !isFull && !event.sales_closed ? `
             <button class="btn btn-success btn-large" onclick="eventsManager.enrollInEvent('${eventIdInternal}', true)" style="width: 100%;">
               Inscrever-se Agora
@@ -304,6 +406,9 @@ class EventsManager {
 
       if (window.authManager) {
         window.authManager.createModal(event.title, content);
+
+        // Carregar atividades do evento
+        this.loadEventActivities(eventIdInternal);
 
         // Após abrir o modal, carregar feedbacks e verificar participação
         (async () => {
@@ -570,6 +675,84 @@ class EventsManager {
     this.currentPage = page;
     this.loadEvents();
     document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async loadEventActivities(eventId) {
+    const container = document.getElementById(`activitiesList-${eventId}`);
+    if (!container) return;
+
+    try {
+      const response = await api.getEventActivities(eventId);
+      const activities = response.data || [];
+
+      if (activities.length === 0) {
+        container.innerHTML = '<p style="color: var(--secondary-color); text-align: center;">Nenhuma atividade programada para este evento.</p>';
+        return;
+      }
+
+      container.innerHTML = activities.map(activity => {
+        const title = activity.title || activity.titulo || 'Sem título';
+        const description = activity.description || activity.descricao || '';
+        const speaker = activity.speaker || activity.palestrante || '';
+        const location = activity.location || activity.local || '';
+        const startDate = new Date(activity.start_date || activity.data_inicio);
+        const endDate = new Date(activity.end_date || activity.data_fim);
+
+        const formatTime = (date) => {
+          return date.toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        };
+
+        return `
+          <div class="activity-public-item" style="
+            background: var(--background-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--primary-color);
+          ">
+            <div style="font-weight: 600; color: var(--text-color); margin-bottom: 0.5rem;">
+              ${title}
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.9rem; color: var(--secondary-color);">
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                ${formatTime(startDate)} - ${formatTime(endDate)}
+              </span>
+              ${location ? `
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle;">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                ${location}
+              </span>
+              ` : ''}
+              ${speaker ? `
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle;">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                ${speaker}
+              </span>
+              ` : ''}
+            </div>
+            ${description ? `<p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--secondary-color);">${description}</p>` : ''}
+          </div>
+        `;
+      }).join('');
+    } catch (error) {
+      console.error('Erro ao carregar atividades:', error);
+      container.innerHTML = '<p style="color: var(--secondary-color); text-align: center;">Erro ao carregar atividades.</p>';
+    }
   }
 }
 

@@ -214,10 +214,28 @@
           </div>
 
           <div class="form-group">
-            <label for="eventImage">Imagem do Evento</label>
-            <input type="file" id="eventImage" class="input-field" accept="image/*">
-            <small style="color: var(--secondary-color);">Formatos aceitos: JPG, PNG, WebP (máx. 5MB)</small>
-            <div id="imagePreview" style="margin-top: 1rem;"></div>
+            <label for="eventImages">Imagens do Evento (até 5)</label>
+            <input type="file" id="eventImages" class="input-field" accept="image/*" multiple>
+            <small style="color: var(--secondary-color);">Formatos aceitos: JPG, PNG, WebP (máx. 5MB cada). Selecione até 5 imagens.</small>
+            <div id="imagesPreview" class="images-preview-grid" style="margin-top: 1rem;"></div>
+            <div id="existingImages" class="existing-images-grid" style="margin-top: 1rem;"></div>
+          </div>
+
+          <!-- Seção de Atividades (apenas para edição) -->
+          <div id="activitiesSection" class="activities-section" style="display: none;">
+            <div class="activities-header">
+              <h3>Atividades do Evento</h3>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddActivity">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Nova Atividade
+              </button>
+            </div>
+            <div id="activitiesList" class="activities-list">
+              <p class="text-muted">Carregando atividades...</p>
+            </div>
           </div>
 
           <div id="formError"></div>
@@ -229,6 +247,73 @@
         </form>
       </section>
     </main>
+  </div>
+
+  <!-- Modal de Atividade -->
+  <div id="activityModal" class="modal" style="display: none;">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2 id="activityModalTitle">Nova Atividade</h2>
+        <button class="modal-close" id="closeActivityModal">&times;</button>
+      </div>
+      <form id="activityForm">
+        <input type="hidden" id="activityId">
+        <input type="hidden" id="activityEventId">
+        
+        <div class="form-group">
+          <label for="activityTitle">Título da Atividade *</label>
+          <input type="text" id="activityTitle" class="input-field" required minlength="3">
+        </div>
+
+        <div class="form-group">
+          <label for="activityDescription">Descrição</label>
+          <textarea id="activityDescription" class="input-field" rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="activityStartDate">Data/Hora Início *</label>
+            <input type="datetime-local" id="activityStartDate" class="input-field" required>
+          </div>
+
+          <div class="form-group">
+            <label for="activityEndDate">Data/Hora Fim *</label>
+            <input type="datetime-local" id="activityEndDate" class="input-field" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="activityLocation">Local</label>
+            <input type="text" id="activityLocation" class="input-field" placeholder="Ex: Sala 101, Auditório">
+          </div>
+
+          <div class="form-group">
+            <label for="activitySpeaker">Palestrante</label>
+            <input type="text" id="activitySpeaker" class="input-field" placeholder="Nome do palestrante">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="activityCapacity">Vagas (opcional)</label>
+            <input type="number" id="activityCapacity" class="input-field" min="0" placeholder="Deixe vazio para ilimitado">
+          </div>
+
+          <div class="form-group">
+            <label for="activityOrder">Ordem de Exibição</label>
+            <input type="number" id="activityOrder" class="input-field" min="0" value="0">
+          </div>
+        </div>
+
+        <div id="activityFormError"></div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelActivity">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Atividade</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Modal Container -->

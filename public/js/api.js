@@ -147,8 +147,15 @@ class API {
 
   // Salvar dados de autenticação
   saveAuthData(data) {
+    // Normalize user fields to keep frontend consistent regardless of backend field names
+    const user = { ...data.user };
+    // Support both portuguese and english field names produced by the migration
+    if (user.nome && !user.name) user.name = user.nome;
+    if (user.papel && !user.role) user.role = user.papel;
+    if (user._id && !user.id) user.id = user._id;
+
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('user', JSON.stringify(user));
   }
 
   // Limpar dados de autenticação
@@ -245,6 +252,16 @@ class API {
     return this.delete(`/events/${id}`, true);
   }
 
+  // Admin endpoints
+  async getUsers(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.get(`/admin/users${qs ? `?${qs}` : ''}`, true);
+  }
+
+  async deleteUser(id) {
+    return this.delete(`/admin/users/${id}`, true);
+  }
+
   async getMyEvents() {
     return this.get('/events/organizer/my-events', true);
   }
@@ -264,6 +281,27 @@ class API {
 
   async getEventParticipants(eventId) {
     return this.get(`/enrollments/events/${eventId}/participants`, true);
+  }
+
+  // Atividades
+  async getEventActivities(eventId) {
+    return this.get(`/events/${eventId}/activities`);
+  }
+
+  async getActivity(activityId) {
+    return this.get(`/activities/${activityId}`);
+  }
+
+  async createActivity(eventId, data) {
+    return this.post(`/events/${eventId}/activities`, data, true);
+  }
+
+  async updateActivity(activityId, data) {
+    return this.put(`/activities/${activityId}`, data, true);
+  }
+
+  async deleteActivity(activityId) {
+    return this.delete(`/activities/${activityId}`, true);
   }
 }
 
