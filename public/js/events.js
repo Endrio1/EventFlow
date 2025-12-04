@@ -108,7 +108,7 @@ class EventsManager {
   const showCapacity = currentUser && (currentUser.role === 'admin' || isOwner);
   const salesBadge = event.sales_closed ? `<span class="sales-closed-badge">Vendas Fechadas</span>` : '';
 
-    const imageUrl = event.image ? `http://localhost:3000${event.image}` : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%231E40AF" width="400" height="200"/><text fill="white" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">Evento</text></svg>';
+    const imageUrl = event.image ? event.image : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%231E40AF" width="400" height="200"/><text fill="white" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">Evento</text></svg>';
 
     return `
       <div class="event-card" data-event-id="${event.id}">
@@ -206,7 +206,7 @@ class EventsManager {
       });
 
       const isFull = event.current_enrollments >= event.capacity;
-      const imageUrl = event.image ? `http://localhost:3000${event.image}` : '';
+      const imageUrl = event.image ? event.image : '';
 
       const currentUser = api.getCurrentUser();
       const isOwner = currentUser && currentUser.role === 'organizer' && (

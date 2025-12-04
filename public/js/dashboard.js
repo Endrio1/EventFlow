@@ -485,7 +485,7 @@ class DashboardManager {
     // Mostrar preview da imagem atual
     if (event.image) {
       const preview = document.getElementById('imagePreview');
-      preview.innerHTML = `<img src="http://localhost:3000${event.image}" alt="Preview">`;
+      preview.innerHTML = `<img src="${event.image}" alt="Preview">`;
     }
   }
 
